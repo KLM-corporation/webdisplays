@@ -4,19 +4,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.controls.ScreenControl;
 import net.montoyo.wd.core.MissingPermissionException;
 import net.montoyo.wd.entity.ScreenBlockEntity;
+import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.utilities.data.BlockSide;
 import net.montoyo.wd.utilities.math.Vector2i;
 
 import java.util.function.Function;
 
 public class LaserControl extends ScreenControl {
-	public static final ResourceLocation id = new ResourceLocation("webdisplays:laser");
+	public static final ResourceLocation id = ResourceLocation.parse("webdisplays:laser");
 	
 	public enum ControlType {
 		MOVE, DOWN, UP
@@ -54,10 +55,10 @@ public class LaserControl extends ScreenControl {
 	}
 	
 	@Override
-	public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
+	public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, IPayloadContext ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
 		// feel like this makes sense, but I wanna get opinions first
-//		checkPerms(ScreenRights.INTERACT, permissionChecker, ctx.getSender());
-		ServerPlayer sender = ctx.getSender();
+//		checkPerms(ScreenRights.INTERACT, permissionChecker, Packet.sender(ctx));
+		ServerPlayer sender = Packet.sender(ctx);
 		switch (type) {
 			case UP -> tes.laserUp(side, sender, button);
 			case DOWN -> tes.laserDownMove(side, sender, coord, true, button);
@@ -67,7 +68,7 @@ public class LaserControl extends ScreenControl {
 	
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx) {
+	public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, IPayloadContext ctx) {
 		if (coord != null)
 			tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, coord, -1);
 		

@@ -6,6 +6,7 @@ package net.montoyo.wd.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -21,7 +22,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.montoyo.wd.core.IPeripheral;
 import net.montoyo.wd.entity.KeyboardBlockEntity;
 import net.montoyo.wd.item.ItemLinker;
@@ -32,14 +33,13 @@ import net.montoyo.wd.utilities.math.Vector3i;
 import org.jetbrains.annotations.NotNull;
 
 import static net.montoyo.wd.block.KeyboardBlockLeft.KEYBOARD_AABBS;
-import static net.montoyo.wd.block.PeripheralBlock.point;
 
 // TODO: merge into KeyboardLeft
 public class KeyboardBlockRight extends Block implements IPeripheral {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public KeyboardBlockRight() {
-        super(Properties.copy(Blocks.STONE)
+        super(Properties.ofFullCopy(Blocks.STONE)
                 .strength(1.5f, 10.f));
     }
     
@@ -55,7 +55,7 @@ public class KeyboardBlockRight extends Block implements IPeripheral {
         removeLeftPiece(state, world, pos);
         if (setState)
             world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-        WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> point(world, pos)), new S2CMessageCloseGui(pos));
+        WDNetworkRegistry.sendToNear(world, pos, new S2CMessageCloseGui(pos));
     }
     
     @Override
@@ -98,19 +98,35 @@ public class KeyboardBlockRight extends Block implements IPeripheral {
     }
 
     @Override
-    public @NotNull InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (player.getItemInHand(hand).getItem() instanceof ItemLinker)
-            return InteractionResult.PASS;
+    protected ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        return onUse(stack, state, level, pos, player, hand, hit);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        return this.onUse(net.minecraft.world.item.ItemStack.EMPTY, state, level, pos, player, InteractionHand.MAIN_HAND, hit).result();
+    }
+
+    private ItemInteractionResult onUse(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof ItemLinker)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
         KeyboardBlockEntity tek = KeyboardBlockLeft.getTileEntity(state, level, pos);
         if (tek != null)
-            return tek.onRightClick(player, hand);
+            return toItemResult(tek.onRightClick(player, hand));
 
-        return InteractionResult.PASS;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
     
     @Override
     public VoxelShape getOcclusionShape(BlockState arg, BlockGetter arg2, BlockPos arg3) {
         return Shapes.empty();
     }
+    private static ItemInteractionResult toItemResult(InteractionResult r) {
+        if (r == InteractionResult.SUCCESS) return ItemInteractionResult.SUCCESS;
+        if (r == InteractionResult.CONSUME) return ItemInteractionResult.CONSUME;
+        if (r == InteractionResult.FAIL) return ItemInteractionResult.FAIL;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
 }

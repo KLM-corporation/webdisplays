@@ -49,7 +49,7 @@ public class ScreenData {
 
     public int mouseType;
 
-    public static ScreenData deserialize(CompoundTag tag) {
+    public static ScreenData deserialize(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
         ScreenData ret = new ScreenData();
         ret.side = BlockSide.values()[tag.getByte("Side")];
         ret.size = new Vector2i(tag.getInt("Width"), tag.getInt("Height"));
@@ -90,7 +90,7 @@ public class ScreenData {
         ret.upgrades = new ArrayList<>();
 
         for (int i = 0; i < upgrades.size(); i++)
-            ret.upgrades.add(ItemStack.of(upgrades.getCompound(i)));
+            ret.upgrades.add(ItemStack.parse(provider, upgrades.getCompound(i)).orElse(ItemStack.EMPTY));
 
         if (tag.contains("AutoVolume"))
             ret.autoVolume = tag.getBoolean("AutoVolume");
@@ -98,7 +98,7 @@ public class ScreenData {
         return ret;
     }
 
-    public CompoundTag serialize() {
+    public CompoundTag serialize(net.minecraft.core.HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         tag.putByte("Side", (byte) side.ordinal());
         tag.putInt("Width", size.x);
@@ -130,7 +130,7 @@ public class ScreenData {
 
         list = new ListTag();
         for (ItemStack is : upgrades)
-            list.add(is.save(new CompoundTag()));
+            list.add(is.save(provider, new CompoundTag()));
 
         tag.put("Upgrades", list);
         tag.putBoolean("AutoVolume", autoVolume);

@@ -5,14 +5,15 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.controls.ScreenControl;
 import net.montoyo.wd.core.MissingPermissionException;
 import net.montoyo.wd.core.ScreenRights;
 import net.montoyo.wd.entity.ScreenData;
 import net.montoyo.wd.entity.ScreenBlockEntity;
+import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.utilities.data.BlockSide;
 
 import java.util.function.Function;
@@ -22,7 +23,7 @@ import java.util.function.Function;
  */
 @Deprecated
 public class ManageRightsAndUpdgradesControl extends ScreenControl {
-	public static final ResourceLocation id = new ResourceLocation("webdisplays:mod_rights_upgrades");
+	public static final ResourceLocation id = ResourceLocation.parse("webdisplays:mod_rights_upgrades");
 	
 	public enum ControlType {
 		RIGHTS, UPGRADES
@@ -55,7 +56,7 @@ public class ManageRightsAndUpdgradesControl extends ScreenControl {
 		switch (type) {
 			case UPGRADES -> {
 				adding = buf.readBoolean();
-				toRemove = buf.readItem();
+				toRemove = net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
 			}
 			case RIGHTS -> {
 				friendRights = buf.readInt();
@@ -70,7 +71,7 @@ public class ManageRightsAndUpdgradesControl extends ScreenControl {
 		switch (type) {
 			case UPGRADES -> {
 				buf.writeBoolean(adding);
-				buf.writeItem(toRemove);
+				net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, toRemove);
 			}
 			case RIGHTS -> {
 				buf.writeInt(friendRights);
@@ -80,11 +81,11 @@ public class ManageRightsAndUpdgradesControl extends ScreenControl {
 	}
 	
 	@Override
-	public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
-		ServerPlayer player = ctx.getSender();
+	public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, IPayloadContext ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
+		ServerPlayer player = Packet.sender(ctx);
 		switch (type) {
 			case UPGRADES -> {
-				checkPerms(ScreenRights.MANAGE_UPGRADES, permissionChecker, ctx.getSender());
+				checkPerms(ScreenRights.MANAGE_UPGRADES, permissionChecker, Packet.sender(ctx));
 				if (adding)
 					throw new RuntimeException("Cannot add an upgrade from the client");
 				else tes.removeUpgrade(side, toRemove, player);
@@ -103,8 +104,8 @@ public class ManageRightsAndUpdgradesControl extends ScreenControl {
 	
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx) {
-		ServerPlayer player = ctx.getSender();
+	public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, IPayloadContext ctx) {
+		ServerPlayer player = Packet.sender(ctx);
 		switch (type) {
 			case UPGRADES -> {
 				if (adding)

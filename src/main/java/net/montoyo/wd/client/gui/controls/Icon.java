@@ -42,7 +42,7 @@ public class Icon extends BasicControl {
         v1 = json.getDouble("v1", 0.0);
         u2 = json.getDouble("u2", 1.0);
         v2 = json.getDouble("v2", 1.0);
-        texture = new ResourceLocation(json.getString("resourceLocation", ""));
+        texture = ResourceLocation.tryParse(json.getString("resourceLocation", ""));
     }
 
     @Override
@@ -50,12 +50,10 @@ public class Icon extends BasicControl {
         if(texture != null) {
             poseStack.pose().pushPose();
 //            RenderSystem.enableTexture();
-            RenderSystem.setShaderTexture(1, texture);
-            RenderSystem.bindTexture(1);
+            RenderSystem.setShaderTexture(0, texture);
             RenderSystem.enableBlend();
             fillTexturedRect(poseStack.pose(), x, y, width, height, u1, v1, u2, v2);
             RenderSystem.disableBlend();
-            RenderSystem.bindTexture(-1);
             poseStack.pose().popPose();
         }
     }

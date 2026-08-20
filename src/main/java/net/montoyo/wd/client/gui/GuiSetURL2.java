@@ -8,8 +8,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.client.ClientProxy;
 import net.montoyo.wd.client.gui.controls.Button;
@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(Dist.CLIENT)
+@net.neoforged.fml.common.EventBusSubscriber(value = Dist.CLIENT)
 public class GuiSetURL2 extends WDScreen {
 	
 	//Screen data
@@ -74,7 +74,7 @@ public class GuiSetURL2 extends WDScreen {
 	@Override
 	public void init() {
 		super.init();
-		loadFrom(new ResourceLocation("webdisplays", "gui/seturl.json"));
+		loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/seturl.json"));
 		tfURL.setText(screenURL);
 	}
 	
@@ -86,10 +86,10 @@ public class GuiSetURL2 extends WDScreen {
 	protected UUID getUUID() {
 		if (stack == null || !(stack.getItem() instanceof ItemMinePad2))
 			throw new RuntimeException("Get UUID is being called for a non-minepad UI");
-		if (!stack.hasTag() || !stack.getTag().contains("PadID"))
-			stack.getOrCreateTag().putUUID("PadID", UUID.randomUUID());
+		if (!stack.has(net.montoyo.wd.core.WDComponents.PAD_ID))
+			stack.set(net.montoyo.wd.core.WDComponents.PAD_ID, UUID.randomUUID());
 		
-		return stack.getTag().getUUID("PadID");
+		return stack.get(net.montoyo.wd.core.WDComponents.PAD_ID);
 	}
 	
 	@GuiSubscribe
@@ -100,11 +100,11 @@ public class GuiSetURL2 extends WDScreen {
 			validate(tfURL.getText());
 		else if (ev.getSource() == btnShutDown) {
 			if (isPad) {
-				WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(
+				WDNetworkRegistry.sendToServer(new C2SMessageMinepadUrl(
 						getUUID(),
 						""
 				));
-				stack.getTag().remove("PadID");
+				stack.remove(net.montoyo.wd.core.WDComponents.PAD_ID);
 			}
 			
 			minecraft.setScreen(null);
@@ -130,8 +130,8 @@ public class GuiSetURL2 extends WDScreen {
 			
 			if (isPad) {
 				UUID uuid = getUUID();
-				WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(uuid, url));
-				stack.getTag().putString("PadURL", url);
+				WDNetworkRegistry.sendToServer(new C2SMessageMinepadUrl(uuid, url));
+				stack.set(net.montoyo.wd.core.WDComponents.PAD_URL, url);
 				
 				ClientProxy.PadData pd = ((ClientProxy) WebDisplays.PROXY).getPadByID(uuid);
 				
@@ -139,7 +139,7 @@ public class GuiSetURL2 extends WDScreen {
 					pd.view.loadURL(WebDisplays.applyBlacklist(url));
 				}
 			} else
-				WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.setURL(tileEntity, screenSide, url, remoteLocation));
+				WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.setURL(tileEntity, screenSide, url, remoteLocation));
 		}
 		
 		minecraft.setScreen(null);

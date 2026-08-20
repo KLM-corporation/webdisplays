@@ -121,18 +121,17 @@ public class ScreenRenderer implements BlockEntityRenderer<ScreenBlockEntity> {
 			}
 			
 			Tesselator tesselator = Tesselator.getInstance();
-			BufferBuilder builder = tesselator.getBuilder();
-			//TODO: don't use tesselator
+			BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 			RenderSystem.enableDepthTest();
 			RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-			RenderSystem._setShaderTexture(0, ((MCEFBrowser) scr.browser).getRenderer().getTextureID());
+			RenderSystem.setShaderTexture(0, ((MCEFBrowser) scr.browser).getRenderer().getTextureID());
 			RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-			builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-			builder.vertex(poseStack.last().pose(), -sw, -sh, 0.505f).uv(0.f, 1.f).color(1.f, 1.f, 1.f, 1.f).endVertex();
-			builder.vertex(poseStack.last().pose(), sw, -sh, 0.505f).uv(1.f, 1.f).color(1.f, 1.f, 1.f, 1.f).endVertex();
-			builder.vertex(poseStack.last().pose(), sw, sh, 0.505f).uv(1.f, 0.f).color(1.f, 1.f, 1.f, 1.f).endVertex();
-			builder.vertex(poseStack.last().pose(), -sw, sh, 0.505f).uv(0.f, 0.f).color(1.f, 1.f, 1.f, 1.f).endVertex();
-			tesselator.end();//Minecraft does shit with mah texture otherwise...
+			org.joml.Matrix4f smat = poseStack.last().pose();
+			builder.addVertex(smat, -sw, -sh, 0.505f).setUv(0.f, 1.f).setColor(1.f, 1.f, 1.f, 1.f);
+			builder.addVertex(smat, sw, -sh, 0.505f).setUv(1.f, 1.f).setColor(1.f, 1.f, 1.f, 1.f);
+			builder.addVertex(smat, sw, sh, 0.505f).setUv(1.f, 0.f).setColor(1.f, 1.f, 1.f, 1.f);
+			builder.addVertex(smat, -sw, sh, 0.505f).setUv(0.f, 0.f).setColor(1.f, 1.f, 1.f, 1.f);
+			com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.build());
 			RenderSystem.disableDepthTest();
 			
 			// TODO: it'd be neat to draw a mouse cursor on the screen

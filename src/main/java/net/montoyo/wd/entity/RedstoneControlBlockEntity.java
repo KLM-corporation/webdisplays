@@ -29,8 +29,8 @@ public class RedstoneControlBlockEntity extends AbstractPeripheralBlockEntity {
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    public void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
 
         risingEdgeURL = tag.getString("RisingEdgeURL");
         fallingEdgeURL = tag.getString("FallingEdgeURL");
@@ -38,8 +38,8 @@ public class RedstoneControlBlockEntity extends AbstractPeripheralBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
         tag.putString("RisingEdgeURL", risingEdgeURL);
         tag.putString("FallingEdgeURL", fallingEdgeURL);
         tag.putBoolean("Powered", state);

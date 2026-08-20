@@ -17,8 +17,8 @@ import net.montoyo.wd.client.gui.loading.JsonOWrapper;
 
 public class CheckBox extends BasicControl {
 
-    private static final ResourceLocation texUnchecked = new ResourceLocation("webdisplays", "textures/gui/checkbox.png");
-    private static final ResourceLocation texChecked = new ResourceLocation("webdisplays", "textures/gui/checkbox_checked.png");
+    private static final ResourceLocation texUnchecked = ResourceLocation.fromNamespaceAndPath("webdisplays", "textures/gui/checkbox.png");
+    private static final ResourceLocation texChecked = ResourceLocation.fromNamespaceAndPath("webdisplays", "textures/gui/checkbox_checked.png");
     public static final int WIDTH = 16;
     public static final int HEIGHT = 16;
 

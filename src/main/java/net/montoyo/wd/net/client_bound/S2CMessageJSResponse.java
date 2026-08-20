@@ -5,14 +5,25 @@
 package net.montoyo.wd.net.client_bound;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.core.JSServerRequest;
 import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.utilities.Log;
 
-public class S2CMessageJSResponse extends Packet {
+public class S2CMessageJSResponse implements CustomPacketPayload {
 
+
+	public static final CustomPacketPayload.Type<S2CMessageJSResponse> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "js_response"));
+	public static final StreamCodec<FriendlyByteBuf, S2CMessageJSResponse> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), S2CMessageJSResponse::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
     private int id;
     private JSServerRequest type;
     private boolean success;
@@ -36,7 +47,6 @@ public class S2CMessageJSResponse extends Packet {
     }
     
     public S2CMessageJSResponse(FriendlyByteBuf buf) {
-        super(buf);
         
         int id = buf.readInt();
         JSServerRequest type = JSServerRequest.fromID(buf.readByte());
@@ -64,7 +74,6 @@ public class S2CMessageJSResponse extends Packet {
         }
     }
 
-    @Override
     public void write(FriendlyByteBuf buf) {
         buf.writeInt(id);
         buf.writeByte(type.ordinal());
@@ -79,9 +88,9 @@ public class S2CMessageJSResponse extends Packet {
         }
     }
 
-    public void handle(NetworkEvent.Context ctx) {
-        if (checkClient(ctx)) {
-            ctx.enqueueWork(() -> {
+    public void handle(IPayloadContext ctx) {
+        if (Packet.checkClient(ctx)) {
+            Packet.enqueueWork(ctx, () -> {
                 try {
                     if (success)
                         WebDisplays.PROXY.handleJSResponseSuccess(id, type, data);
@@ -91,7 +100,6 @@ public class S2CMessageJSResponse extends Packet {
                     Log.warningEx("Could not handle JS response", t);
                 }
             });
-            ctx.setPacketHandled(true);
         }
     }
 }

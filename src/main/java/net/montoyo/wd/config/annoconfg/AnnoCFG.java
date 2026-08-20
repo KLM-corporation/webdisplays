@@ -1,10 +1,10 @@
 package net.montoyo.wd.config.annoconfg;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.montoyo.wd.config.annoconfg.annotation.format.*;
 import net.montoyo.wd.config.annoconfg.annotation.value.Default;
 import net.montoyo.wd.config.annoconfg.annotation.value.DoubleRange;
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.function.Supplier;
 
 public class AnnoCFG {
-	private ForgeConfigSpec mySpec;
+	private ModConfigSpec mySpec;
 	
 	private final HashMap<String, ConfigEntry> handles = new HashMap<>();
 	
@@ -30,7 +30,7 @@ public class AnnoCFG {
 	
 	public AnnoCFG(IEventBus bus, Class<?> clazz) {
 		bus.addListener(this::onConfigChange);
-		ForgeConfigSpec.Builder configBuilder = new ForgeConfigSpec.Builder();
+		ModConfigSpec.Builder configBuilder = new ModConfigSpec.Builder();
 		setup("", configBuilder, clazz);
 		configs.add(this);
 		
@@ -54,7 +54,7 @@ public class AnnoCFG {
 		}
 	}
 	
-	protected void setupCommentsAndTranslations(AnnotatedElement element, ForgeConfigSpec.Builder builder, String... additionalLines) {
+	protected void setupCommentsAndTranslations(AnnotatedElement element, ModConfigSpec.Builder builder, String... additionalLines) {
 		Translation translation = element.getAnnotation(Translation.class);
 		Comment comment = element.getAnnotation(Comment.class);
 		
@@ -75,7 +75,7 @@ public class AnnoCFG {
 			builder.translation(translation.value());
 	}
 	
-	public void setup(String dir, ForgeConfigSpec.Builder builder, Class<?> clazz) {
+	public void setup(String dir, ModConfigSpec.Builder builder, Class<?> clazz) {
 		if (dir.startsWith(".")) dir = dir.substring(1);
 		
 		for (Field field : clazz.getFields()) {
@@ -214,6 +214,6 @@ public class AnnoCFG {
 	}
 	
 	public void create(ModConfig.Type type, String file) {
-		ModLoadingContext.get().registerConfig(type, mySpec, file);
+		ModLoadingContext.get().getActiveContainer().registerConfig(type, mySpec);
 	}
 }

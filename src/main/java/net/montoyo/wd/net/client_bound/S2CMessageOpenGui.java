@@ -5,21 +5,31 @@
 package net.montoyo.wd.net.client_bound;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.data.GuiData;
 import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.utilities.Log;
 
-public class S2CMessageOpenGui extends Packet {
+public class S2CMessageOpenGui implements CustomPacketPayload {
 	private GuiData data;
+
+	public static final CustomPacketPayload.Type<S2CMessageOpenGui> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "open_gui"));
+	public static final StreamCodec<FriendlyByteBuf, S2CMessageOpenGui> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), S2CMessageOpenGui::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
 	
 	public S2CMessageOpenGui(GuiData data) {
 		this.data = data;
 	}
 	
 	public S2CMessageOpenGui(FriendlyByteBuf buf) {
-		super(buf);
 		
 		String name = buf.readUtf();
 		data = GuiData.read(name, buf);
@@ -30,16 +40,14 @@ public class S2CMessageOpenGui extends Packet {
 		}
 	}
 	
-	@Override
 	public void write(FriendlyByteBuf buf) {
 		buf.writeUtf(data.getName());
 		data.serialize(buf);
 	}
 	
-	public void handle(NetworkEvent.Context context) {
-		if (checkClient(context)) {
-			context.enqueueWork(() -> WebDisplays.PROXY.displayGui(data));
-			context.setPacketHandled(true);
+	public void handle(IPayloadContext context) {
+		if (Packet.checkClient(context)) {
+			Packet.enqueueWork(context, () -> WebDisplays.PROXY.displayGui(data));
 		}
 	}
 }

@@ -9,7 +9,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.controls.ScreenControl;
 import net.montoyo.wd.controls.ScreenControlRegistry;
@@ -24,7 +27,15 @@ import net.montoyo.wd.utilities.data.Rotation;
 import net.montoyo.wd.utilities.serialization.NameUUIDPair;
 
 // TODO: use registry based approach
-public class S2CMessageScreenUpdate extends Packet  {
+public class S2CMessageScreenUpdate implements CustomPacketPayload  {
+
+	public static final CustomPacketPayload.Type<S2CMessageScreenUpdate> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "screen_update"));
+	public static final StreamCodec<FriendlyByteBuf, S2CMessageScreenUpdate> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), S2CMessageScreenUpdate::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
     ScreenControl control;
     BlockPos pos;
     BlockSide side;
@@ -35,7 +46,6 @@ public class S2CMessageScreenUpdate extends Packet  {
     }
     
     public S2CMessageScreenUpdate(FriendlyByteBuf buf) {
-        super(buf);
     
         pos = buf.readBlockPos();
         side = (BlockSide) BufferUtils.readEnum(buf, (i) -> BlockSide.values()[i], (byte) 1);
@@ -97,7 +107,6 @@ public class S2CMessageScreenUpdate extends Packet  {
         return screenUpdate;
     }
 
-    @Override
     public void write(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         BufferUtils.writeEnum(buf, side, (byte) 1);
@@ -106,16 +115,15 @@ public class S2CMessageScreenUpdate extends Packet  {
         control.write(buf);
     }
     
-    public void handle(NetworkEvent.Context ctx) {
-        if (checkClient(ctx)) {
-            ctx.enqueueWork(() -> {
+    public void handle(IPayloadContext ctx) {
+        if (Packet.checkClient(ctx)) {
+            Packet.enqueueWork(ctx, () -> {
                 Level level = (Level) WebDisplays.PROXY.getWorld(ctx);
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof ScreenBlockEntity tes) {
                     control.handleClient(pos, side, tes, ctx);
                 }
             });
-            ctx.setPacketHandled(true);
             
 //                switch (action) {
 //                    case UPDATE_URL -> {

@@ -119,46 +119,48 @@ public class ControlGroup extends Container {
             y2 -= bp;
             lw += 12.0;
 
-            vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+            org.joml.Matrix4f vcMat = poseStack.pose().last().pose();
+            net.minecraft.client.renderer.RenderType guiRt = net.minecraft.client.renderer.RenderType.gui();
+            com.mojang.blaze3d.vertex.VertexConsumer vc = poseStack.bufferSource().getBuffer(guiRt);
 
             //Top edge (y = y1)
             if(labelW == 0) {
-                vBuffer.vertex(x1, y1 + 1.0, 0.0).endVertex();
-                vBuffer.vertex(x2, y1 + 1.0, 0.0).endVertex();
-                vBuffer.vertex(x2, y1, 0.0).endVertex();
-                vBuffer.vertex(x1, y1, 0.0).endVertex();
+                vc.addVertex(vcMat, (float)(x1), (float)(y1 + 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x2), (float)(y1 + 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x2), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x1), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
             } else {
                 //Left
-                vBuffer.vertex(x1, y1 + 1.0, 0.0).endVertex();
-                vBuffer.vertex(x1 + 8.0, y1 + 1.0, 0.0).endVertex();
-                vBuffer.vertex(x1 + 8.0, y1, 0.0).endVertex();
-                vBuffer.vertex(x1, y1, 0.0).endVertex();
+                vc.addVertex(vcMat, (float)(x1), (float)(y1 + 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x1 + 8.0), (float)(y1 + 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x1 + 8.0), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x1), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
 
                 //Right
-                vBuffer.vertex(x1 + lw, y1 + 1.0, 0.0).endVertex();
-                vBuffer.vertex(x2, y1 + 1.0, 0.0).endVertex();
-                vBuffer.vertex(x2, y1, 0.0).endVertex();
-                vBuffer.vertex(x1 + lw, y1, 0.0).endVertex();
+                vc.addVertex(vcMat, (float)(x1 + lw), (float)(y1 + 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x2), (float)(y1 + 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x2), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
+                vc.addVertex(vcMat, (float)(x1 + lw), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
             }
 
             //Bottom edge (y = y2)
-            vBuffer.vertex(x1, y2, 0.0).endVertex();
-            vBuffer.vertex(x2, y2, 0.0).endVertex();
-            vBuffer.vertex(x2, y2 - 1.0, 0.0).endVertex();
-            vBuffer.vertex(x1, y2 - 1.0, 0.0).endVertex();
+            vc.addVertex(vcMat, (float)(x1), (float)(y2), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x2), (float)(y2), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x2), (float)(y2 - 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x1), (float)(y2 - 1.0), (float)(0.0)).setColor(255, 255, 255, 255);
 
             //Left edge (x = x1)
-            vBuffer.vertex(x1, y2, 0.0).endVertex();
-            vBuffer.vertex(x1 + 1.0, y2, 0.0).endVertex();
-            vBuffer.vertex(x1 + 1.0, y1, 0.0).endVertex();
-            vBuffer.vertex(x1, y1, 0.0).endVertex();
+            vc.addVertex(vcMat, (float)(x1), (float)(y2), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x1 + 1.0), (float)(y2), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x1 + 1.0), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x1), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
 
             //Right edge (x = x2)
-            vBuffer.vertex(x2 - 1.0, y2, 0.0).endVertex();
-            vBuffer.vertex(x2, y2, 0.0).endVertex();
-            vBuffer.vertex(x2, y1, 0.0).endVertex();
-            vBuffer.vertex(x2 - 1.0, y1, 0.0).endVertex();
-            tessellator.end();
+            vc.addVertex(vcMat, (float)(x2 - 1.0), (float)(y2), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x2), (float)(y2), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x2), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
+            vc.addVertex(vcMat, (float)(x2 - 1.0), (float)(y1), (float)(0.0)).setColor(255, 255, 255, 255);
+            poseStack.bufferSource().endBatch(guiRt);
 
             RenderSystem.setShaderColor(sdrCol[0], sdrCol[1], sdrCol[2], sdrCol[3]);
 

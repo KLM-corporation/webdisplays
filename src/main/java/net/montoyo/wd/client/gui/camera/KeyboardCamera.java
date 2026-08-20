@@ -7,8 +7,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.montoyo.wd.client.gui.GuiKeyboard;
 import net.montoyo.wd.config.ClientConfig;
 import net.montoyo.wd.entity.ScreenBlockEntity;
@@ -212,13 +212,13 @@ public class KeyboardCamera {
 
     protected static int delay = 8;
 
-    public static void gameTick(TickEvent.ClientTickEvent event) {
+    public static void gameTick(ClientTickEvent event) {
         if (mouseStatus[0] || mouseStatus[1]) {
             oxCrd = Mth.lerp(0.5, oxCrd, xCrd);
             oyCrd = Mth.lerp(0.5, oyCrd, yCrd);
             return;
         }
-        if (event.phase.equals(TickEvent.Phase.END)) {
+        if (event instanceof ClientTickEvent.Post) {
             if (side == null) {
                 delay = 1;
                 oxCrd = -1;

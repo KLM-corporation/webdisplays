@@ -34,8 +34,8 @@ public abstract class AbstractPeripheralBlockEntity extends BlockEntity implemen
 
     // TODO
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    public void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
 
         if (tag.contains("WDScreen", 10)) {
             CompoundTag scr = tag.getCompound("WDScreen");
@@ -48,8 +48,8 @@ public abstract class AbstractPeripheralBlockEntity extends BlockEntity implemen
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
 
         if (screenPos != null && screenSide != null) {
             CompoundTag scr = new CompoundTag();
@@ -60,19 +60,6 @@ public abstract class AbstractPeripheralBlockEntity extends BlockEntity implemen
 
             tag.put("WDScreen", scr);
         }
-    }
-
-    // this is not used for loading from disk, so I'm marking it final
-    @Override
-    public final void deserializeNBT(CompoundTag tag) {
-        super.deserializeNBT(tag);
-    }
-
-    // this is not used for writing to disk, so I'm marking it final
-    @Override
-    @Nonnull
-    public final CompoundTag serializeNBT() {
-        return super.serializeNBT();
     }
 
     @Override

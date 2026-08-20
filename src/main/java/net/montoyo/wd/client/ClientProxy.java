@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
@@ -45,19 +46,20 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ModelEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.client.event.RenderHighlightEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.event.RenderHighlightEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.SharedProxy;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.block.ScreenBlock;
@@ -98,7 +100,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = "webdisplays", value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = "webdisplays", value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
 public class ClientProxy extends SharedProxy implements ResourceManagerReloadListener {
 	
 	private static ClientProxy INSTANCE;
@@ -136,9 +138,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		if (!LaserPointerRenderer.isOn()) {
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
-			poseStack.blit(new ResourceLocation(
-					"webdisplays:textures/gui/cursors.png"
-			), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
+			poseStack.blit(ResourceLocation.parse("webdisplays:textures/gui/cursors.png"), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
 			ci.cancel();
 			return;
 		}
@@ -152,9 +152,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		if (result.getType() != HitResult.Type.BLOCK || mc.level.getBlockState(bpos).getBlock() != BlockRegistry.SCREEN_BLOCk.get()) {
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
-			poseStack.blit(new ResourceLocation(
-					"webdisplays:textures/gui/cursors.png"
-			), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
+			poseStack.blit(ResourceLocation.parse("webdisplays:textures/gui/cursors.png"), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
 			ci.cancel();
 			return;
 		}
@@ -178,9 +176,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
-		poseStack.blit(new ResourceLocation(
-				"webdisplays:textures/gui/cursors.png"
-		), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, coordX, coordY, 15, 15, 256, 256);
+		poseStack.blit(ResourceLocation.parse("webdisplays:textures/gui/cursors.png"), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, coordX, coordY, 15, 15, 256, 256);
 
 		ci.cancel();
 	}
@@ -261,14 +257,14 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	
 	@SubscribeEvent
 	public static void onModelRegistryEvent(ModelEvent.RegisterGeometryLoaders event) {
-		event.register(ScreenModelLoader.SCREEN_LOADER.getPath(), new ScreenModelLoader());
+		event.register(ScreenModelLoader.SCREEN_LOADER, new ScreenModelLoader());
 	}
 	
 	@Override
 	public void preInit() {
 		super.preInit();
 		mc = Minecraft.getInstance();
-		MinecraftForge.EVENT_BUS.register(this);
+		NeoForge.EVENT_BUS.register(this);
 	}
 	
 	@Override
@@ -397,10 +393,11 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	public HasAdvancement hasClientPlayerAdvancement(@Nonnull ResourceLocation rl) {
 		if (advancementToProgressField != null && mc.player != null && mc.player.connection != null) {
 			ClientAdvancements cam = mc.player.connection.getAdvancements();
-			Advancement adv = cam.getAdvancements().get(rl);
+			net.minecraft.advancements.AdvancementNode node = cam.getTree().get(rl);
 			
-			if (adv == null)
+			if (node == null)
 				return HasAdvancement.DONT_KNOW;
+			AdvancementHolder adv = node.holder();
 			
 			if (lastAdvMgr != cam) {
 				lastAdvMgr = cam;
@@ -567,9 +564,9 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	/**************************************** EVENT METHODS ****************************************/
 
 	@SubscribeEvent
-	public void onLevelTick(TickEvent.LevelTickEvent ev) {
-		if (!ev.side.equals(LogicalSide.CLIENT)) return;
-		if (ev.phase != TickEvent.Phase.END) return;
+	public void onLevelTick(LevelTickEvent ev) {
+		if (!ev.getLevel().isClientSide()) return;
+		if (!(ev instanceof LevelTickEvent.Post)) return;
 		
 		//Unload/load screens depending on client player distance
 		if (mc.player == null || screenTracking.isEmpty())
@@ -579,7 +576,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		
 		ScreenBlockEntity tes = screenTracking.get(id);
 		
-		if (!tes.getLevel().equals(ev.level))
+		if (!tes.getLevel().equals(ev.getLevel()))
 			return;
 		
 		lastTracked++;
@@ -616,8 +613,8 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	}
 	
 	@SubscribeEvent
-	public void onTick(TickEvent.ClientTickEvent ev) {
-		if (ev.phase != TickEvent.Phase.END) return;
+	public void onTick(ClientTickEvent ev) {
+		if (!(ev instanceof ClientTickEvent.Post)) return;
 		
 		//Help
 		if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_F1)) {
@@ -705,7 +702,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		Item item = ev.getItemStack().getItem();
 		IItemRenderer renderer;
 		
-		if (ItemRegistry.MINEPAD.isPresent() && ItemRegistry.LASER_POINTER.isPresent()) {
+		if (ItemRegistry.MINEPAD.isBound() && ItemRegistry.LASER_POINTER.isBound()) {
 			if (item == ItemRegistry.MINEPAD.get())
 				renderer = minePadRenderer;
 			else if (item == ItemRegistry.LASER_POINTER.get())
@@ -741,31 +738,29 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		Vec3 lookVec = mc.player.getLookAngle();
 		Vec3 end = start.add(lookVec.x * dist, lookVec.y * dist, lookVec.z * dist);
 		
-		return mc.level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, null));
+		return mc.level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, net.minecraft.world.phys.shapes.CollisionContext.of(mc.player)));
 	}
 	
 	private void updateInventory(NonNullList<ItemStack> inv, ItemStack heldStack, int cnt) {
 		for (int i = 0; i < cnt; i++) {
 			ItemStack item = inv.get(i);
 			
-			if (ItemRegistry.MINEPAD.isPresent()) {
+			if (ItemRegistry.MINEPAD.isBound()) {
 				if (item.getItem() == ItemRegistry.MINEPAD.get()) {
-					CompoundTag tag = item.getTag();
-					
-					if (tag != null && tag.contains("PadID"))
-						updatePad(tag.getUUID("PadID"), tag, item == heldStack);
+					if (item.has(net.montoyo.wd.core.WDComponents.PAD_ID))
+						updatePad(item.get(net.montoyo.wd.core.WDComponents.PAD_ID), item, item == heldStack);
 				}
 			}
 		}
 	}
 	
-	private void updatePad(UUID id, CompoundTag tag, boolean isSelected) {
+	private void updatePad(UUID id, net.minecraft.world.item.ItemStack stack, boolean isSelected) {
 		PadData pd = padMap.get(id);
 		
 		if (pd != null)
 			pd.isInHotbar = true;
-		else if (isSelected && tag.contains("PadURL")) {
-			pd = new PadData(tag.getString("PadURL"), id);
+		else if (isSelected && stack.has(net.montoyo.wd.core.WDComponents.PAD_URL)) {
+			pd = new PadData(stack.get(net.montoyo.wd.core.WDComponents.PAD_URL), id);
 			padMap.put(id, pd);
 			padList.add(pd);
 		}
@@ -821,13 +816,13 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	}
 	
 	@Override
-	public BlockGetter getWorld(NetworkEvent.Context context) {
+	public BlockGetter getWorld(IPayloadContext context) {
 		BlockGetter senderLevel = super.getWorld(context);
 		if (senderLevel == null) return Minecraft.getInstance().level;
 		return senderLevel;
 	}
 	
-	public static void onDrawSelection(RenderHighlightEvent event) {
+	public static void onDrawSelection(RenderHighlightEvent.Block event) {
 		if (event.getTarget() instanceof BlockHitResult bhr) {
 			BlockState state = Minecraft.getInstance().level.getBlockState(bhr.getBlockPos());
 			if (state.getBlock() instanceof ScreenBlock screen) {

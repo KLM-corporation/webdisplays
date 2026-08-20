@@ -6,6 +6,10 @@ pluginManagement {
             url = 'https://maven.neoforged.net/releases'
         }
         maven { url = 'https://maven.parchmentmc.org' } // Add this line
+        maven {
+            name = 'SpongePowered'
+            url = 'https://repo.spongepowered.org/maven'
+        }
     }
 //    resolutionStrategy {
 //        eachPlugin {

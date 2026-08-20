@@ -16,8 +16,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.client.ClientProxy;
 import net.montoyo.wd.config.ClientConfig;
@@ -29,7 +29,7 @@ import static com.mojang.math.Axis.*;
 public final class MinePadRenderer implements IItemRenderer {
 	private static final float PI = (float) Math.PI;
 	private final Minecraft mc = Minecraft.getInstance();
-	private final ResourceLocation tex = new ResourceLocation("webdisplays", "textures/item/model/minepad.png");
+	private final ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("webdisplays", "textures/item/model/minepad.png");
 	private final ModelMinePad model = new ModelMinePad();
 	private final ClientProxy clientProxy = (ClientProxy) WebDisplays.PROXY;
 	
@@ -104,8 +104,8 @@ public final class MinePadRenderer implements IItemRenderer {
 		// force draw so the browser can be drawn ontop of the model
 		multiBufferSource.getBuffer(RenderType.LINES);
 		
-		if (is.getTag() != null && is.getTag().contains("PadID")) {
-			ClientProxy.PadData pd = clientProxy.getPadByID(is.getTag().getUUID("PadID"));
+		if (is.has(net.montoyo.wd.core.WDComponents.PAD_ID)) {
+			ClientProxy.PadData pd = clientProxy.getPadByID(is.get(net.montoyo.wd.core.WDComponents.PAD_ID));
 			
 			//Render web view
 			if (pd != null) {
@@ -121,13 +121,12 @@ public final class MinePadRenderer implements IItemRenderer {
 				RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
 				RenderSystem.setShaderTexture(0, ((MCEFBrowser) pd.view).getRenderer().getTextureID());
 				Tesselator t = Tesselator.getInstance();
-				BufferBuilder buffer = t.getBuilder();
-				buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-				buffer.vertex(stack.last().pose(), (float) x1, (float) y1, 0.0f).uv(0.0F, 1.0F).color(255, 255, 255, 255).endVertex();
-				buffer.vertex(stack.last().pose(), (float) x2, (float) y1, 0.0f).uv(1.0F, 1.0F).color(255, 255, 255, 255).endVertex();
-				buffer.vertex(stack.last().pose(), (float) x2, (float) y2, 0.0f).uv(1.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-				buffer.vertex(stack.last().pose(), (float) x1, (float) y2, 0.0f).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-				t.end();
+				BufferBuilder buffer = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+				buffer.addVertex(stack.last().pose(), (float) x1, (float) y1, 0.0f).setUv(0.0F, 1.0F).setColor(255, 255, 255, 255);
+				buffer.addVertex(stack.last().pose(), (float) x2, (float) y1, 0.0f).setUv(1.0F, 1.0F).setColor(255, 255, 255, 255);
+				buffer.addVertex(stack.last().pose(), (float) x2, (float) y2, 0.0f).setUv(1.0F, 0.0F).setColor(255, 255, 255, 255);
+				buffer.addVertex(stack.last().pose(), (float) x1, (float) y2, 0.0f).setUv(0.0F, 0.0F).setColor(255, 255, 255, 255);
+				com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(buffer.build());
 				RenderSystem.enableDepthTest();
 			}
 		}
@@ -154,7 +153,7 @@ public final class MinePadRenderer implements IItemRenderer {
 		stack.translate(handSideSign * 5.6f, 0.0f, 0.0f);
 		
 		PlayerRenderer playerRenderer = (PlayerRenderer) mc.getEntityRenderDispatcher().getRenderer(mc.player);
-		RenderSystem.setShaderTexture(0, mc.player.getSkinTextureLocation());
+		RenderSystem.setShaderTexture(0, mc.player.getSkin().texture());
 		
 		if (handSideSign >= 0.0f)
 			playerRenderer.renderRightHand(stack, buffer, combinedLight, mc.player);

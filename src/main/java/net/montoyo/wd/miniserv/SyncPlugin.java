@@ -31,7 +31,7 @@ public class SyncPlugin {
         if (syncedPlayersList != null) {
             for (ServerPlayer syncedPlayer : syncedPlayersList) {
                 if(!syncedPlayer.hasDisconnected()) {
-//                    WDNetworkRegistry.INSTANCE.sendToServer(new SMessageGetUrl(URL.get(syncedPlayer)));
+//                    WDNetworkRegistry.sendToServer(new SMessageGetUrl(URL.get(syncedPlayer)));
                 }
             }
         }

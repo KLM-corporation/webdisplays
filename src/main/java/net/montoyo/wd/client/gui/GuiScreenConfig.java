@@ -136,7 +136,7 @@ public class GuiScreenConfig extends WDScreen {
     @Override
     public void init() {
         super.init();
-        loadFrom(new ResourceLocation("webdisplays", "gui/screencfg.json"));
+        loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/screencfg.json"));
 
         friendBoxes = new CheckBox[] { boxFResolution, boxFUpgrades, boxFOthers, boxFFriends, boxFClick, boxFSetUrl };
         boxFResolution.setUserdata(ScreenRights.MODIFY_SCREEN);
@@ -207,7 +207,7 @@ public class GuiScreenConfig extends WDScreen {
                 throw new NumberFormatException(); //I'm lazy
 
             if(x != scr.resolution.x || y != scr.resolution.y)
-                WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.resolution(tes, side, new Vector2i(x, y)));
+                WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.resolution(tes, side, new Vector2i(x, y)));
         } catch(NumberFormatException ex) {
             //Roll back
             tfResX.setText("" + scr.resolution.x);
@@ -225,7 +225,7 @@ public class GuiScreenConfig extends WDScreen {
             clickSetRes();
         else if(ev.getSource() == btnChangeRot) {
             Rotation[] rots = Rotation.values();
-            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, rots[(rotation.ordinal() + 1) % rots.length]));
+            WDNetworkRegistry.sendToServer(new C2SMessageScreenCtrl(tes, side, rots[(rotation.ordinal() + 1) % rots.length]));
         }
     }
 
@@ -288,7 +288,7 @@ public class GuiScreenConfig extends WDScreen {
     @GuiSubscribe
     public void onRemovePlayer(List.EntryClick ev) {
         if(ev.getSource() == lstFriends)
-            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, (NameUUIDPair) ev.getUserdata(), true));
+            WDNetworkRegistry.sendToServer(new C2SMessageScreenCtrl(tes, side, (NameUUIDPair) ev.getUserdata(), true));
     }
 
     @GuiSubscribe
@@ -318,12 +318,12 @@ public class GuiScreenConfig extends WDScreen {
             } catch(NumberFormatException ex) {
                 cbLockRatio.setChecked(false);
             }
-        } else if(ev.getSource() == cbAutoVolume) WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.autoVol(tes, side, ev.isChecked()));
+        } else if(ev.getSource() == cbAutoVolume) WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.autoVol(tes, side, ev.isChecked()));
     }
 
     @GuiSubscribe
     public void onRemoveUpgrade(UpgradeGroup.ClickEvent ev) {
-        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, ev.getMouseOverStack()));
+        WDNetworkRegistry.sendToServer(new C2SMessageScreenCtrl(tes, side, ev.getMouseOverStack()));
     }
 
     public boolean isFriendCheckbox(CheckBox cb) {
@@ -344,7 +344,7 @@ public class GuiScreenConfig extends WDScreen {
 
         if(adding) {
             if(!hasFriend(pairs[0]))
-                WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, pairs[0], false));
+                WDNetworkRegistry.sendToServer(new C2SMessageScreenCtrl(tes, side, pairs[0], false));
 
             tfFriend.setDisabled(false);
             tfFriend.clear();
@@ -433,7 +433,7 @@ public class GuiScreenConfig extends WDScreen {
 
     @Override
     protected void sync() {
-        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, friendRights, otherRights));
+        WDNetworkRegistry.sendToServer(new C2SMessageScreenCtrl(tes, side, friendRights, otherRights));
         Log.info("Sent sync packet");
     }
 

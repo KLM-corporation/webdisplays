@@ -7,6 +7,7 @@ package net.montoyo.wd.block;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +25,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.montoyo.wd.core.DefaultPeripheral;
 import net.montoyo.wd.entity.KeyboardBlockEntity;
 import net.montoyo.wd.item.ItemLinker;
@@ -97,15 +98,24 @@ public class KeyboardBlockLeft extends PeripheralBlock {
     }
     
     @Override
-    public @NotNull InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (player.getItemInHand(hand).getItem() instanceof ItemLinker)
-            return InteractionResult.PASS;
+    protected ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        return onUse(stack, state, level, pos, player, hand, hit);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        return this.onUse(net.minecraft.world.item.ItemStack.EMPTY, state, level, pos, player, InteractionHand.MAIN_HAND, hit).result();
+    }
+
+    private ItemInteractionResult onUse(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof ItemLinker)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         
         KeyboardBlockEntity tek = KeyboardBlockLeft.getTileEntity(state, level, pos);
         if (tek != null)
-            return tek.onRightClick(player, hand);
+            return toItemResult(tek.onRightClick(player, hand));
         
-        return InteractionResult.PASS;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
     
     @Override
@@ -130,7 +140,7 @@ public class KeyboardBlockLeft extends PeripheralBlock {
         removeRightPiece(state, world, pos);
         if (setState)
             world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-        WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> point(world, pos)), new S2CMessageCloseGui(pos));
+        WDNetworkRegistry.sendToNear(world, pos, new S2CMessageCloseGui(pos));
     }
     
     @Override
@@ -139,4 +149,11 @@ public class KeyboardBlockLeft extends PeripheralBlock {
             remove(arg, arg2, arg3, false, false);
         super.onRemove(arg, arg2, arg3, arg4, bl);
     }
+    private static ItemInteractionResult toItemResult(InteractionResult r) {
+        if (r == InteractionResult.SUCCESS) return ItemInteractionResult.SUCCESS;
+        if (r == InteractionResult.CONSUME) return ItemInteractionResult.CONSUME;
+        if (r == InteractionResult.FAIL) return ItemInteractionResult.FAIL;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
 }

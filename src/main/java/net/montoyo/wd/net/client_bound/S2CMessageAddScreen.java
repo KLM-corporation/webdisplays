@@ -8,7 +8,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.entity.ScreenData;
 import net.montoyo.wd.entity.ScreenBlockEntity;
@@ -25,8 +28,16 @@ import java.util.ArrayList;
 
 import static net.montoyo.wd.block.ScreenBlock.hasTE;
 
-public class S2CMessageAddScreen extends Packet {
+public class S2CMessageAddScreen implements CustomPacketPayload {
 	private boolean clear;
+
+	public static final CustomPacketPayload.Type<S2CMessageAddScreen> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "add_screen"));
+	public static final StreamCodec<FriendlyByteBuf, S2CMessageAddScreen> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), S2CMessageAddScreen::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
 	private Vector3i pos;
 	private ScreenData[] screens;
 	
@@ -52,7 +63,6 @@ public class S2CMessageAddScreen extends Packet {
 	}
 	
 	public S2CMessageAddScreen(FriendlyByteBuf buf) {
-		super(buf);
 		
 		clear = buf.readBoolean();
 		pos = new Vector3i(buf);
@@ -72,11 +82,10 @@ public class S2CMessageAddScreen extends Packet {
 			
 			int numUpgrades = buf.readByte();
 			for (int j = 0; j < numUpgrades; j++)
-				screens[i].upgrades.add(buf.readItem());
+				screens[i].upgrades.add(net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
 		}
 	}
 	
-	@Override
 	public void write(FriendlyByteBuf buf) {
 		buf.writeBoolean(clear);
 		pos.writeTo(buf);
@@ -92,13 +101,13 @@ public class S2CMessageAddScreen extends Packet {
 			buf.writeByte(scr.upgrades.size());
 			
 			for (ItemStack is : scr.upgrades)
-				buf.writeItem(is);
+				net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, is);
 		}
 	}
 	
-	public void handle(NetworkEvent.Context ctx) {
-		if (checkClient(ctx)) {
-			ctx.enqueueWork(() -> {
+	public void handle(IPayloadContext ctx) {
+		if (Packet.checkClient(ctx)) {
+			Packet.enqueueWork(ctx, () -> {
 				Level lvl = (Level) WebDisplays.PROXY.getWorld(ctx);
 				BlockEntity te = lvl.getBlockEntity(pos.toBlock());
 				if (!(te instanceof ScreenBlockEntity)) {
@@ -136,8 +145,6 @@ public class S2CMessageAddScreen extends Packet {
 						scr.browser.loadURL(webUrl);
 				}
 			});
-			
-			ctx.setPacketHandled(true);
 		}
 	}
 }

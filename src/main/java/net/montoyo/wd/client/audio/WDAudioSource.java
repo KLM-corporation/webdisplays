@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.CompletableFuture;
 
 public class WDAudioSource implements SoundInstance {
-    private static final ResourceLocation location = new ResourceLocation("webdisplays:audio_source");
+    private static final ResourceLocation location = ResourceLocation.parse("webdisplays:audio_source");
     private static final WeighedSoundEvents events = new WeighedSoundEvents(
             location, "webdisplays.browser"
     );
@@ -28,7 +28,7 @@ public class WDAudioSource implements SoundInstance {
         }
     };
     private final Sound sound = new Sound(
-            "unused",
+            ResourceLocation.parse("webdisplays:unused"),
             CONST_1,
             CONST_1,
             1, Sound.Type.SOUND_EVENT,

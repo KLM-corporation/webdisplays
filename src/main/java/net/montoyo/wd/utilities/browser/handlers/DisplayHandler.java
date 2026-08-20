@@ -29,7 +29,7 @@ public class DisplayHandler implements CefDisplayHandler {
                         pd.view.loadURL(WebDisplays.BLACKLIST_URL);
                     else {
                         pd.updateTime(); //Avoid spamming the server with porn URLs
-                        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(pd.id, url));
+                        WDNetworkRegistry.sendToServer(new C2SMessageMinepadUrl(pd.id, url));
                     }
 
                     break;

@@ -10,7 +10,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.controls.ScreenControl;
 import net.montoyo.wd.controls.ScreenControlRegistry;
@@ -27,7 +30,15 @@ import net.montoyo.wd.utilities.data.Rotation;
 import net.montoyo.wd.utilities.serialization.NameUUIDPair;
 
 // TODO: this is a mess; a registry based approach would likely be more readable
-public class C2SMessageScreenCtrl extends Packet {
+public class C2SMessageScreenCtrl implements CustomPacketPayload {
+
+	public static final CustomPacketPayload.Type<C2SMessageScreenCtrl> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "screen_ctrl"));
+	public static final StreamCodec<FriendlyByteBuf, C2SMessageScreenCtrl> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), C2SMessageScreenCtrl::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
 	@Deprecated(forRemoval = true)
 	public static final int CTRL_LASER_MOVE = 0;
 	@Deprecated(forRemoval = true)
@@ -137,7 +148,6 @@ public class C2SMessageScreenCtrl extends Packet {
 	}
 	
 	public C2SMessageScreenCtrl(FriendlyByteBuf buf) {
-		super(buf);
 		
 		pos = buf.readBlockPos();
 		side = (BlockSide) BufferUtils.readEnum(buf, (i) -> BlockSide.values()[i], (byte) 1);
@@ -145,7 +155,6 @@ public class C2SMessageScreenCtrl extends Packet {
 		this.control = ScreenControlRegistry.parse(buf);
 	}
 	
-	@Override
 	public void write(FriendlyByteBuf buf) {
 		buf.writeBlockPos(pos);
 		BufferUtils.writeEnum(buf, side, (byte) 1);
@@ -160,16 +169,16 @@ public class C2SMessageScreenCtrl extends Packet {
 			throw new MissingPermissionException(right, sender);
 	}
 	
-	public void handle(NetworkEvent.Context ctx) {
-		if (checkServer(ctx)) {
-			ctx.enqueueWork(() -> {
+	public void handle(IPayloadContext ctx) {
+		if (Packet.checkServer(ctx)) {
+			Packet.enqueueWork(ctx, () -> {
 				try {
 					Level level = (Level) WebDisplays.PROXY.getWorld(ctx);
 					BlockEntity be = level.getBlockEntity(pos);
 					if (be instanceof ScreenBlockEntity tes) {
 						control.handleServer(pos, side, tes, ctx, (perm) -> {
 							try {
-								checkPermission(ctx.getSender(), tes, perm);
+								checkPermission(Packet.sender(ctx), tes, perm);
 								return true;
 							} catch (Throwable ignored) {
 								return false;
@@ -181,7 +190,6 @@ public class C2SMessageScreenCtrl extends Packet {
 				} catch (Throwable ignored) {
 				}
 			});
-			ctx.setPacketHandled(true);
 		}
 	}
 }

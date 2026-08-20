@@ -15,10 +15,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLPaths;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.client.gui.camera.KeyboardCamera;
 import net.montoyo.wd.client.gui.controls.Button;
@@ -40,8 +40,6 @@ import org.cef.misc.CefCursorType;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
-import org.vivecraft.client_vr.gameplay.VRPlayer;
-import org.vivecraft.client_vr.gameplay.screenhandlers.KeyboardHandler;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -92,7 +90,12 @@ public class GuiKeyboard extends WDScreen {
         // detect the mod reflectively if the mod is not found
         else {
             try {
-                Class<?> clazz = Class.forName("org.vivecraft.gameplay.screenhandlers.KeyboardHandler");
+                Class<?> clazz;
+                try {
+                    clazz = Class.forName("org.vivecraft.client_vr.gameplay.screenhandlers.KeyboardHandler");
+                } catch (ClassNotFoundException ex) {
+                    clazz = Class.forName("org.vivecraft.gameplay.screenhandlers.KeyboardHandler");
+                }
                 //noinspection ConstantConditions
                 if (clazz == null) vivePres = false;
                 else {
@@ -116,7 +119,7 @@ public class GuiKeyboard extends WDScreen {
         else
             showWarning = !hasUserReadWarning();
 
-        loadFrom(new ResourceLocation("webdisplays", "gui/kb_right.json"));
+        loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/kb_right.json"));
 
         if (showWarning) {
             int maxLabelW = 0;
@@ -154,8 +157,7 @@ public class GuiKeyboard extends WDScreen {
         syncTicks = 5;
 
         if (vivecraftPresent)
-            if (VRPlayer.get() != null)
-                KeyboardHandler.setOverlayShowing(true);
+            setVROverlay(true);
 
         KeyboardCamera.focus(tes, side);
 
@@ -168,12 +170,29 @@ public class GuiKeyboard extends WDScreen {
         });
     }
 
+
+    private static void setVROverlay(boolean show) {
+        try {
+            Class<?> vrPlayerClazz = Class.forName("org.vivecraft.client_vr.gameplay.VRPlayer");
+            Object vrPlayer = vrPlayerClazz.getMethod("get").invoke(null);
+            if (vrPlayer == null)
+                return;
+            Class<?> khClazz;
+            try {
+                khClazz = Class.forName("org.vivecraft.client_vr.gameplay.screenhandlers.KeyboardHandler");
+            } catch (ClassNotFoundException ex) {
+                khClazz = Class.forName("org.vivecraft.gameplay.screenhandlers.KeyboardHandler");
+            }
+            khClazz.getMethod("setOverlayShowing", boolean.class).invoke(null, show);
+        } catch (Throwable ignored) {
+        }
+    }
+
     @Override
     public void removed() {
         super.removed();
         if (vivecraftPresent)
-            if (VRPlayer.get() != null)
-                KeyboardHandler.setOverlayShowing(false);
+            setVROverlay(false);
         KeyboardCamera.focus(null, null);
         CefBrowser browser = data.browser;
         if (browser instanceof MCEFBrowser mcef) {
@@ -222,7 +241,7 @@ public class GuiKeyboard extends WDScreen {
     @Override
     protected void sync() {
         if(!evStack.isEmpty()) {
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.type(tes, side, WebDisplays.GSON.toJson(evStack), kbPos));
+            WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.type(tes, side, WebDisplays.GSON.toJson(evStack), kbPos));
             evStack.clear();
         }
     }
@@ -284,7 +303,7 @@ public class GuiKeyboard extends WDScreen {
     }
 
     protected void mouse(double mouseX, double mouseY, Consumer<Vector2i> func) {
-        float pct = Minecraft.getInstance().getPartialTick();
+        float pct = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
 
         double fov = Minecraft.getInstance().gameRenderer.getFov(
                 Minecraft.getInstance().getEntityRenderDispatcher().camera,
@@ -324,7 +343,7 @@ public class GuiKeyboard extends WDScreen {
     public void mouseMoved(double mouseX, double mouseY) {
         mouse(mouseX, mouseY, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
+            WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
         });
 
         super.mouseMoved(mouseX, mouseY);
@@ -335,7 +354,7 @@ public class GuiKeyboard extends WDScreen {
         mouse(mouseX, mouseY, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
             tes.handleMouseEvent(side, ClickControl.ControlType.DOWN, hit, button);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserDown(tes, side, hit, button));
+            WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserDown(tes, side, hit, button));
         });
 
         KeyboardCamera.setMouse(button, true);
@@ -348,7 +367,7 @@ public class GuiKeyboard extends WDScreen {
         mouse(mouseX, mouseY, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
             tes.handleMouseEvent(side, ClickControl.ControlType.UP, hit, button);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserUp(tes, side, button));
+            WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserUp(tes, side, button));
         });
 
         KeyboardCamera.setMouse(button, false);
@@ -363,7 +382,7 @@ public class GuiKeyboard extends WDScreen {
 
         mouse(mouseX * width, mouseY * height, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
+            WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
         });
 
         super.tick();

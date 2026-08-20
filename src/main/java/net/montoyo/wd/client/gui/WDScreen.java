@@ -118,7 +118,7 @@ public abstract class WDScreen extends Screen {
     @Override
     public void render(GuiGraphics poseStack, int mouseX, int mouseY, float ptt) {
         if(defaultBackground)
-            renderBackground(poseStack);
+            renderBackground(poseStack, mouseX, mouseY, ptt);
 
         RenderSystem.setShaderColor(1.f, 1.f, 1.f, 1.f);
         
@@ -203,7 +203,7 @@ public abstract class WDScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double delta) {
         boolean scrolled = false;
 
         for(Control ctrl : controls)
@@ -348,7 +348,7 @@ public abstract class WDScreen extends Screen {
     }
 
     protected void requestAutocomplete(String beginning, boolean matchExact) {
-        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageACQuery(beginning, matchExact));
+        WDNetworkRegistry.sendToServer(new C2SMessageACQuery(beginning, matchExact));
     }
 
     public void onAutocompleteResult(NameUUIDPair pairs[]) {

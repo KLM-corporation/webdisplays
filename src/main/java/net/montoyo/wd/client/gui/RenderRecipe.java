@@ -18,14 +18,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.montoyo.wd.utilities.Log;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.stream.IntStream;
 
-import static net.minecraftforge.api.distmarker.Dist.CLIENT;
+import static net.neoforged.api.distmarker.Dist.CLIENT;
 
 @OnlyIn(CLIENT)
 public class RenderRecipe extends Screen {
@@ -45,7 +45,7 @@ public class RenderRecipe extends Screen {
 
     }
 
-    private static final ResourceLocation CRAFTING_TABLE_GUI_TEXTURES = new ResourceLocation("textures/gui/container/crafting_table.png");
+    private static final ResourceLocation CRAFTING_TABLE_GUI_TEXTURES = ResourceLocation.parse("textures/gui/container/crafting_table.png");
     private static final int SIZE_X = 176;
     private static final int SIZE_Y = 166;
     private int x;
@@ -64,12 +64,13 @@ public class RenderRecipe extends Screen {
         y = (height - SIZE_Y) / 2;
         renderItem = minecraft.getItemRenderer();
 
-        for(Recipe recipe : minecraft.level.getRecipeManager().getRecipes()) {
-            ResourceLocation regName = recipe.getId();
+        for(net.minecraft.world.item.crafting.RecipeHolder<?> holder : minecraft.level.getRecipeManager().getRecipes()) {
+            ResourceLocation regName = holder.id();
+            net.minecraft.world.item.crafting.Recipe<?> recipe = holder.value();
 
             if(regName != null && regName.getNamespace().equals("webdisplays")) {
-                if(recipe instanceof ShapedRecipe)
-                    recipes.add(new NameRecipePair(regName.getPath(), (ShapedRecipe) recipe));
+                if(recipe instanceof ShapedRecipe shaped)
+                    recipes.add(new NameRecipePair(regName.getPath(), shaped));
                 else
                     Log.warning("Found non-shaped recipe %s", regName.toString());
             }
@@ -82,7 +83,7 @@ public class RenderRecipe extends Screen {
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float partialTick) {
 //        renderBackground(poseStack);
-        renderBackground(context);
+        renderBackground(context, mouseX, mouseY, partialTick);
 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.setShaderTexture(0, CRAFTING_TABLE_GUI_TEXTURES);
@@ -120,8 +121,8 @@ public class RenderRecipe extends Screen {
         NonNullList<Ingredient> ingredients = recipe.getIngredients();
         int pos = 0;
 
-        for(int y = 0; y < recipe.getRecipeHeight(); y++) {
-            for(int x = 0; x < recipe.getRecipeWidth(); x++) {
+        for(int y = 0; y < recipe.getHeight(); y++) {
+            for(int x = 0; x < recipe.getWidth(); x++) {
                 ItemStack[] stacks = ingredients.get(pos++).getItems();
 
                 if(stacks.length > 0)

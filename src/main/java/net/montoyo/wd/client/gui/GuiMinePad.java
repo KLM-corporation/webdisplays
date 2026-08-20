@@ -18,7 +18,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.client.ClientProxy;
 import net.montoyo.wd.utilities.browser.WDBrowser;
@@ -29,7 +29,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Optional;
 
-import static net.minecraftforge.api.distmarker.Dist.CLIENT;
+import static net.neoforged.api.distmarker.Dist.CLIENT;
 
 @OnlyIn(CLIENT)
 public class GuiMinePad extends WDScreen {
@@ -73,18 +73,18 @@ public class GuiMinePad extends WDScreen {
 		});
 	}
 
-	private static void addRect(BufferBuilder bb, double x, double y, double w, double h) {
-		bb.vertex(x, y, 0.0).color(255, 255, 255, 255).endVertex();
-		bb.vertex(x + w, y, 0.0).color(255, 255, 255, 255).endVertex();
-		bb.vertex(x + w, y + h, 0.0).color(255, 255, 255, 255).endVertex();
-		bb.vertex(x, y + h, 0.0).color(255, 255, 255, 255).endVertex();
+	private static void addRect(org.joml.Matrix4f mat, BufferBuilder bb, double x, double y, double w, double h) {
+		bb.addVertex(mat, (float) x, (float) y, 0.0f).setColor(255, 255, 255, 255);
+		bb.addVertex(mat, (float) (x + w), (float) y, 0.0f).setColor(255, 255, 255, 255);
+		bb.addVertex(mat, (float) (x + w), (float) (y + h), 0.0f).setColor(255, 255, 255, 255);
+		bb.addVertex(mat, (float) x, (float) (y + h), 0.0f).setColor(255, 255, 255, 255);
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float ptt) {
 		width = trueWidth;
 		height = trueHeight;
-		renderBackground(graphics);
+		renderBackground(graphics, mouseX, mouseY, ptt);
 		width = (int) vw;
 		height = (int) vh;
 
@@ -92,13 +92,13 @@ public class GuiMinePad extends WDScreen {
 		RenderSystem.setShaderColor(0.73f, 0.73f, 0.73f, 1.0f);
 
 		Tesselator t = Tesselator.getInstance();
-		BufferBuilder bb = t.getBuilder();
-		bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-		addRect(bb, vx, vy - 16, vw, 16);
-		addRect(bb, vx, vy + vh, vw, 16);
-		addRect(bb, vx - 16, vy, 16, vh);
-		addRect(bb, vx + vw, vy, 16, vh);
-		t.end();
+		BufferBuilder bb = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		org.joml.Matrix4f guiMat = graphics.pose().last().pose();
+		addRect(guiMat, bb, vx, vy - 16, vw, 16);
+		addRect(guiMat, bb, vx, vy + vh, vw, 16);
+		addRect(guiMat, bb, vx - 16, vy, 16, vh);
+		addRect(guiMat, bb, vx + vw, vy, 16, vh);
+		com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(bb.build());
 
 		if (pad.view != null) {
 //            pad.view.draw(poseStack, vx, vy + vh, vx + vw, vy);
@@ -107,17 +107,17 @@ public class GuiMinePad extends WDScreen {
 			RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
 			RenderSystem.setShaderTexture(0, ((MCEFBrowser) pad.view).getRenderer().getTextureID());
 			t = Tesselator.getInstance();
-			BufferBuilder buffer = t.getBuilder();
-			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+			BufferBuilder buffer = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 			double x1 = vx;
 			double y1 = vy;
 			double x2 = vx + vw;
 			double y2 = vy + vh;
-			buffer.vertex(graphics.pose().last().pose(), (float) x1, (float) y1, 0.0f).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-			buffer.vertex(graphics.pose().last().pose(), (float) x2, (float) y1, 0.0f).uv(1.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-			buffer.vertex(graphics.pose().last().pose(), (float) x2, (float) y2, 0.0f).uv(1.0F, 1.0F).color(255, 255, 255, 255).endVertex();
-			buffer.vertex(graphics.pose().last().pose(), (float) x1, (float) y2, 0.0f).uv(0.0F, 1.0F).color(255, 255, 255, 255).endVertex();
-			t.end();
+			org.joml.Matrix4f bmat = graphics.pose().last().pose();
+			buffer.addVertex(bmat, (float) x1, (float) y1, 0.0f).setUv(0.0F, 0.0F).setColor(255, 255, 255, 255);
+			buffer.addVertex(bmat, (float) x2, (float) y1, 0.0f).setUv(1.0F, 0.0F).setColor(255, 255, 255, 255);
+			buffer.addVertex(bmat, (float) x2, (float) y2, 0.0f).setUv(1.0F, 1.0F).setColor(255, 255, 255, 255);
+			buffer.addVertex(bmat, (float) x1, (float) y2, 0.0f).setUv(0.0F, 1.0F).setColor(255, 255, 255, 255);
+			com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(buffer.build());
 			RenderSystem.enableDepthTest();
 		}
 
@@ -204,7 +204,7 @@ public class GuiMinePad extends WDScreen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amount) {
 		double mx = (mouseX - vx) / vw;
 		double my = (mouseY - vy) / vh;
 		int sx = (int) (mx * WebDisplays.INSTANCE.padResX);
@@ -212,7 +212,7 @@ public class GuiMinePad extends WDScreen {
 		// TODO: this doesn't work, and I don't understand why?
 		((MCEFBrowser) pad.view).sendMouseWheel(sx, sy, amount, (hasControlDown() && !hasAltDown() && !hasShiftDown()) ? GLFW.GLFW_MOD_CONTROL : 0);
 
-		return super.mouseScrolled(mouseX, mouseY, amount);
+		return super.mouseScrolled(mouseX, mouseY, amountX, amount);
 	}
 
 	public void capturedMouse(double scaledX, double scaledY, int sx, int sy) {

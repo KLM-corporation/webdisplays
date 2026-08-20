@@ -12,8 +12,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
@@ -29,16 +29,15 @@ public final class ModelMinePad {
 		
 		Matrix4f positionMatrix = stack.last().pose();
 		Tesselator t = Tesselator.getInstance();
-		BufferBuilder vb = t.getBuilder();
+		BufferBuilder vb = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 		
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-		vb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-		vb.vertex(positionMatrix, (float) x1, (float) y1, 0.0f).color(0, 0, 0, 255).endVertex();
-		vb.vertex(positionMatrix, (float) x2, (float) y1, 0.0f).color(0, 0, 0, 255).endVertex();
-		vb.vertex(positionMatrix, (float) x2, (float) y2, 0.0f).color(0, 0, 0, 255).endVertex();
-		vb.vertex(positionMatrix, (float) x1, (float) y2, 0.0f).color(0, 0, 0, 255).endVertex();
-		t.end();
+		vb.addVertex(positionMatrix, (float) x1, (float) y1, 0.0f).setColor(0, 0, 0, 255);
+		vb.addVertex(positionMatrix, (float) x2, (float) y1, 0.0f).setColor(0, 0, 0, 255);
+		vb.addVertex(positionMatrix, (float) x2, (float) y2, 0.0f).setColor(0, 0, 0, 255);
+		vb.addVertex(positionMatrix, (float) x1, (float) y2, 0.0f).setColor(0, 0, 0, 255);
+		com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(vb.build());
 		
 		int width = 32;
 		int height = 32;
@@ -48,26 +47,26 @@ public final class ModelMinePad {
 		
 		float z = 0;
 		
-		VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutout(new ResourceLocation("webdisplays:textures/item/model/minepad_item.png")));
+		VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutout(ResourceLocation.parse("webdisplays:textures/item/model/minepad_item.png")));
 		
-		consumer.vertex(positionMatrix, (float) x1, (float) y1 - padding, z).color(255, 255, 255, 255).uv(1f / width, 12f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-		consumer.vertex(positionMatrix, (float) x2, (float) y1 - padding, z).color(255, 255, 255, 255).uv(19f / width, 12f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-		consumer.vertex(positionMatrix, (float) x2, (float) y2 + padding, z).color(255, 255, 255, 255).uv(19f / width, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-		consumer.vertex(positionMatrix, (float) x1, (float) y2 + padding, z).color(255, 255, 255, 255).uv(1f / width, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
+		consumer.addVertex(positionMatrix, (float) x1, (float) y1 - padding, z).setColor(255, 255, 255, 255).setUv(1f / width, 12f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+		consumer.addVertex(positionMatrix, (float) x2, (float) y1 - padding, z).setColor(255, 255, 255, 255).setUv(19f / width, 12f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+		consumer.addVertex(positionMatrix, (float) x2, (float) y2 + padding, z).setColor(255, 255, 255, 255).setUv(19f / width, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+		consumer.addVertex(positionMatrix, (float) x1, (float) y2 + padding, z).setColor(255, 255, 255, 255).setUv(1f / width, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
 
-		consumer.vertex(positionMatrix, (float) x1 - padding1, (float) y1, z).color(255, 255, 255, 255).uv(0f / width, 10f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-		consumer.vertex(positionMatrix, (float) x2 + padding1, (float) y1, z).color(255, 255, 255, 255).uv(20f / width, 10f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-		consumer.vertex(positionMatrix, (float) x2 + padding1, (float) y2, z).color(255, 255, 255, 255).uv(20f / width, 1f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-		consumer.vertex(positionMatrix, (float) x1 - padding1, (float) y2, z).color(255, 255, 255, 255).uv(0f / width, 1f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
+		consumer.addVertex(positionMatrix, (float) x1 - padding1, (float) y1, z).setColor(255, 255, 255, 255).setUv(0f / width, 10f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+		consumer.addVertex(positionMatrix, (float) x2 + padding1, (float) y1, z).setColor(255, 255, 255, 255).setUv(20f / width, 10f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+		consumer.addVertex(positionMatrix, (float) x2 + padding1, (float) y2, z).setColor(255, 255, 255, 255).setUv(20f / width, 1f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+		consumer.addVertex(positionMatrix, (float) x1 - padding1, (float) y2, z).setColor(255, 255, 255, 255).setUv(0f / width, 1f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
 		
-//		consumer.vertex(positionMatrix, (float) x2, (float) y2 + padding, z - padding).color(255, 255, 255, 255).uv(0f / width, 1f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-//		consumer.vertex(positionMatrix, (float) x2, (float) y2 + padding, z).color(255, 255, 255, 255).uv(1f / width, 1f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-//		consumer.vertex(positionMatrix, (float) x2, (float) y1 - padding, z).color(255, 255, 255, 255).uv(1f / width, 2f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-//		consumer.vertex(positionMatrix, (float) x2, (float) y1 - padding, z - padding).color(255, 255, 255, 255).uv(0f / width, 2f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
+//		consumer.addVertex(positionMatrix, (float) x2, (float) y2 + padding, z - padding).setColor(255, 255, 255, 255).setUv(0f / width, 1f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+//		consumer.addVertex(positionMatrix, (float) x2, (float) y2 + padding, z).setColor(255, 255, 255, 255).setUv(1f / width, 1f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+//		consumer.addVertex(positionMatrix, (float) x2, (float) y1 - padding, z).setColor(255, 255, 255, 255).setUv(1f / width, 2f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+//		consumer.addVertex(positionMatrix, (float) x2, (float) y1 - padding, z - padding).setColor(255, 255, 255, 255).setUv(0f / width, 2f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
 //
-//		consumer.vertex(positionMatrix, (float) x1, (float) y1 - padding, z - padding).color(255, 255, 255, 255).uv(0f / width, 2f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-//		consumer.vertex(positionMatrix, (float) x1, (float) y1 - padding, z).color(255, 255, 255, 255).uv(1f / width, 2f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-//		consumer.vertex(positionMatrix, (float) x1, (float) y2 + padding, z).color(255, 255, 255, 255).uv(1f / width, 1f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
-//		consumer.vertex(positionMatrix, (float) x1, (float) y2 + padding, z - padding).color(255, 255, 255, 255).uv(0f / width, 1f / height).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(0.25f, 0.5f, 1).endVertex();
+//		consumer.addVertex(positionMatrix, (float) x1, (float) y1 - padding, z - padding).setColor(255, 255, 255, 255).setUv(0f / width, 2f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+//		consumer.addVertex(positionMatrix, (float) x1, (float) y1 - padding, z).setColor(255, 255, 255, 255).setUv(1f / width, 2f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+//		consumer.addVertex(positionMatrix, (float) x1, (float) y2 + padding, z).setColor(255, 255, 255, 255).setUv(1f / width, 1f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
+//		consumer.addVertex(positionMatrix, (float) x1, (float) y2 + padding, z - padding).setColor(255, 255, 255, 255).setUv(0f / width, 1f / height).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0.25f, 0.5f, 1);
 	}
 }

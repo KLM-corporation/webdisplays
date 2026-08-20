@@ -9,8 +9,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.montoyo.wd.client.gui.GuiRedstoneCtrl;
 import net.montoyo.wd.net.BufferUtils;
 import net.montoyo.wd.utilities.math.Vector3i;
@@ -53,7 +53,7 @@ public class RedstoneCtrlData extends GuiData {
 
     @Override
     public void deserialize(FriendlyByteBuf buf) {
-        dimension = new ResourceLocation(buf.readUtf());
+        dimension = ResourceLocation.parse(buf.readUtf());
         pos = BufferUtils.readVec3i(buf);
         risingEdgeURL = buf.readUtf();
         fallingEdgeURL = buf.readUtf();

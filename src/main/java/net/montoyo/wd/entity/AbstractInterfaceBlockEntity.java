@@ -41,14 +41,14 @@ public abstract class AbstractInterfaceBlockEntity extends AbstractPeripheralBlo
     private static final Object[] FALSE = new Object[] { false };
     
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    public void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
         owner = Util.readOwnerFromNBT(tag);
     }
     
     @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
         Util.writeOwnerToNBT(tag, owner);
     }
     

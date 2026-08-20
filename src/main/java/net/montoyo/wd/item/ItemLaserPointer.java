@@ -89,7 +89,7 @@ public class ItemLaserPointer extends Item implements WDItem {
 			
 			if (t - lastPointPacket >= 100) {
 				lastPointPacket = t;
-				WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
+				WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
 			}
 		} else {
 			deselectScreen();
@@ -133,9 +133,9 @@ public class ItemLaserPointer extends Item implements WDItem {
 				te.handleMouseEvent(side, press ? ClickControl.ControlType.DOWN : ClickControl.ControlType.UP, hit, finalButton);
 
 				if (press)
-					WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserDown(te, side, hit, finalButton));
+					WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserDown(te, side, hit, finalButton));
 				else
-					WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserUp(te, side, finalButton));
+					WDNetworkRegistry.sendToServer(C2SMessageScreenCtrl.laserUp(te, side, finalButton));
 			});
 		}
 	}

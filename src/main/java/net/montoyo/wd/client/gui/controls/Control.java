@@ -16,8 +16,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.montoyo.wd.client.gui.WDScreen;
 import net.montoyo.wd.client.gui.loading.JsonOWrapper;
 import net.montoyo.wd.utilities.data.Bounds;
@@ -42,7 +42,6 @@ public abstract class Control {
     protected final Minecraft mc;
     protected final Font font;
     protected final Tesselator tessellator;
-    protected final BufferBuilder vBuffer;
     protected static WDScreen parent;
     protected String name;
     protected Object userdata;
@@ -51,7 +50,6 @@ public abstract class Control {
         mc = Minecraft.getInstance();
         font = mc.font;
         tessellator = Tesselator.getInstance();
-        vBuffer = tessellator.getBuilder();
         parent = WDScreen.CURRENT_SCREEN;
     }
 
@@ -117,7 +115,7 @@ public abstract class Control {
     public abstract int getHeight();
     public abstract void setPos(int x, int y);
 
-    public void fillRect(MultiBufferSource.BufferSource source, int x, double y, int w, int h, int color) {
+    public void fillRect(org.joml.Matrix4f matrix, MultiBufferSource.BufferSource source, int x, double y, int w, int h, int color) {
         double x1 = (double) x;
         double y1 = (double) y;
         double x2 = (double) (x + w);
@@ -134,10 +132,10 @@ public abstract class Control {
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
         VertexConsumer consumer = source.getBuffer(RenderType.gui());
-        consumer.vertex(x1, y2, 0.0).color(r, g, b, a).endVertex();
-        consumer.vertex(x2, y2, 0.0).color(r, g, b, a).endVertex();
-        consumer.vertex(x2, y1, 0.0).color(r, g, b, a).endVertex();
-        consumer.vertex(x1, y1, 0.0).color(r, g, b, a).endVertex();
+        consumer.addVertex(matrix, (float) x1, (float) y2, 0.0f).setColor(r, g, b, a);
+        consumer.addVertex(matrix, (float) x2, (float) y2, 0.0f).setColor(r, g, b, a);
+        consumer.addVertex(matrix, (float) x2, (float) y1, 0.0f).setColor(r, g, b, a);
+        consumer.addVertex(matrix, (float) x1, (float) y1, 0.0f).setColor(r, g, b, a);
 
         RenderSystem.setShaderColor(sdrCol[0], sdrCol[1], sdrCol[2], sdrCol[3]);
 
@@ -151,14 +149,14 @@ public abstract class Control {
         float x2 = (x + w);
         float y2 = (y + h);
 
-        RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         Matrix4f p = poseStack.last().pose();
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        vBuffer.vertex(p, x1, y2, 0.0f).color(255, 255, 255, 255).uv((float) u1, (float) v2).endVertex();
-        vBuffer.vertex(p, x2, y2, 0.0f).color(255, 255, 255, 255).uv((float) u2, (float) v2).endVertex();
-        vBuffer.vertex(p, x2, y1, 0.0f).color(255, 255, 255, 255).uv((float) u2, (float) v1).endVertex();
-        vBuffer.vertex(p, x1, y1, 0.0f).color(255, 255, 255, 255).uv((float) u1, (float) v1).endVertex();
-        BufferUploader.drawWithShader(vBuffer.end());
+        BufferBuilder vBuffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        vBuffer.addVertex(p, x1, y2, 0.0f).setColor(255, 255, 255, 255).setUv((float) u1, (float) v2);
+        vBuffer.addVertex(p, x2, y2, 0.0f).setColor(255, 255, 255, 255).setUv((float) u2, (float) v2);
+        vBuffer.addVertex(p, x2, y1, 0.0f).setColor(255, 255, 255, 255).setUv((float) u2, (float) v1);
+        vBuffer.addVertex(p, x1, y1, 0.0f).setColor(255, 255, 255, 255).setUv((float) u1, (float) v1);
+        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(vBuffer.build());
     }
 
     public static void blend(boolean enable) {
@@ -196,31 +194,33 @@ public abstract class Control {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
-        vBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        org.joml.Matrix4f bMat = poseStack.pose().last().pose();
+        net.minecraft.client.renderer.RenderType bRt = net.minecraft.client.renderer.RenderType.gui();
+        com.mojang.blaze3d.vertex.VertexConsumer vc = poseStack.bufferSource().getBuffer(bRt);
         //Top edge (y = y1)
-        vBuffer.vertex(x1, y1 + sz, 0.0).endVertex();
-        vBuffer.vertex(x2, y1 + sz, 0.0).endVertex();
-        vBuffer.vertex(x2, y1, 0.0).endVertex();
-        vBuffer.vertex(x1, y1, 0.0).endVertex();
+        vc.addVertex(bMat, (float) x1, (float) (y1 + sz), 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x2, (float) (y1 + sz), 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x2, (float) y1, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x1, (float) y1, 0.0f).setColor(255, 255, 255, 255);
 
         //Bottom edge (y = y2)
-        vBuffer.vertex(x1, y2, 0.0).endVertex();
-        vBuffer.vertex(x2, y2, 0.0).endVertex();
-        vBuffer.vertex(x2, y2 - sz, 0.0).endVertex();
-        vBuffer.vertex(x1, y2 - sz, 0.0).endVertex();
+        vc.addVertex(bMat, (float) x1, (float) y2, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x2, (float) y2, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x2, (float) (y2 - sz), 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x1, (float) (y2 - sz), 0.0f).setColor(255, 255, 255, 255);
 
         //Left edge (x = x1)
-        vBuffer.vertex(x1, y2, 0.0).endVertex();
-        vBuffer.vertex(x1 + sz, y2, 0.0).endVertex();
-        vBuffer.vertex(x1 + sz, y1, 0.0).endVertex();
-        vBuffer.vertex(x1, y1, 0.0).endVertex();
+        vc.addVertex(bMat, (float) x1, (float) y2, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) (x1 + sz), (float) y2, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) (x1 + sz), (float) y1, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x1, (float) y1, 0.0f).setColor(255, 255, 255, 255);
 
         //Right edge (x = x2)
-        vBuffer.vertex(x2 - sz, y2, 0.0).endVertex();
-        vBuffer.vertex(x2, y2, 0.0).endVertex();
-        vBuffer.vertex(x2, y1, 0.0).endVertex();
-        vBuffer.vertex(x2 - sz, y1, 0.0).endVertex();
-        tessellator.end();
+        vc.addVertex(bMat, (float) (x2 - sz), (float) y2, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x2, (float) y2, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) x2, (float) y1, 0.0f).setColor(255, 255, 255, 255);
+        vc.addVertex(bMat, (float) (x2 - sz), (float) y1, 0.0f).setColor(255, 255, 255, 255);
+        poseStack.bufferSource().endBatch(bRt);
 
         RenderSystem.setShaderColor(sdrCol[0], sdrCol[1], sdrCol[2], sdrCol[3]);
 
@@ -228,23 +228,22 @@ public abstract class Control {
 //        RenderSystem.enableTexture();
     }
 
+    private static final org.joml.Matrix4f savedModelView = new org.joml.Matrix4f();
+
     public GuiGraphics beginFramebuffer(RenderTarget fbo, float vpW, float vpH) {
         GuiGraphics tmpGraphics = new GuiGraphics(Minecraft.getInstance(), Minecraft.getInstance().renderBuffers().bufferSource());
 
         fbo.bindWrite(true);
 
+        savedModelView.set(RenderSystem.getModelViewMatrix());
         RenderSystem.backupProjectionMatrix();
         RenderSystem.setProjectionMatrix(new Matrix4f().ortho(0.0f, vpW, vpH, 0.0f, -1.0f,1.0f), VertexSorting.ORTHOGRAPHIC_Z);
 
-        tmpGraphics.pose().last().pose().set(RenderSystem.getModelViewStack().last().pose());
-        tmpGraphics.pose().last().normal().set(RenderSystem.getModelViewStack().last().normal());
         PoseStack poseStack = tmpGraphics.pose();
         poseStack.pushPose();
         poseStack.setIdentity();
         poseStack.mulPose(XP.rotationDegrees(180.0f));
-        RenderSystem.getModelViewStack().pushPose();
-        RenderSystem.getModelViewStack().last().pose().set(poseStack.last().pose());
-        RenderSystem.getModelViewStack().last().normal().set(poseStack.last().normal());
+        RenderSystem.getModelViewMatrix().set(poseStack.last().pose());
         RenderSystem.applyModelViewMatrix();
 
         if(!fbo.useDepth)
@@ -257,11 +256,10 @@ public abstract class Control {
         if(!fbo.useDepth)
             RenderSystem.enableDepthTest();
 
-
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.restoreProjectionMatrix();
         poseStack.pose().popPose();
-        RenderSystem.getModelViewStack().popPose();
+        RenderSystem.getModelViewMatrix().set(savedModelView);
         RenderSystem.applyModelViewMatrix();
         fbo.unbindWrite();
         mc.getMainRenderTarget().bindWrite(true);

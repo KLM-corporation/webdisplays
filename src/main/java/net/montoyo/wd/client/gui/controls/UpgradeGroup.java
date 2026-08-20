@@ -34,7 +34,7 @@ public class UpgradeGroup extends BasicControl {
 
             for(ItemStack is: upgrades) {
                 if(is == overStack && !disabled)
-                    fillRect(poseStack.bufferSource(), x, y, 16, 16, 0x80FF0000);
+                    fillRect(poseStack.pose().last().pose(), poseStack.bufferSource(), x, y, 16, 16, 0x80FF0000);
 
                 poseStack.renderItem(is, x, y);
                 poseStack.renderItemDecorations(font, is, x, y);

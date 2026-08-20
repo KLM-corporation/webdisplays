@@ -47,12 +47,10 @@ public class ItemOwnershipThief extends Item implements WDItem {
         }
 
         ItemStack stack = context.getPlayer().getItemInHand(context.getHand());
-        if (stack.hasTag()) {
-            CompoundTag tag = stack.getTag();
-
-            if (tag.contains("PosX") && tag.contains("PosY") && tag.contains("PosZ") && tag.contains("Side")) {
-                BlockPos bp = new BlockPos(tag.getInt("PosX"), tag.getInt("PosY"), tag.getInt("PosZ"));
-                BlockSide side = BlockSide.values()[tag.getByte("Side")];
+        if (stack.has(net.montoyo.wd.core.WDComponents.OT_POS_X)) {
+            {
+                BlockPos bp = new BlockPos(stack.get(net.montoyo.wd.core.WDComponents.OT_POS_X), stack.get(net.montoyo.wd.core.WDComponents.OT_POS_Y), stack.get(net.montoyo.wd.core.WDComponents.OT_POS_Z));
+                BlockSide side = BlockSide.values()[stack.get(net.montoyo.wd.core.WDComponents.OT_SIDE)];
 
                 if (!(context.getLevel().getBlockState(bp).getBlock() instanceof ScreenBlock))
                     return InteractionResult.SUCCESS;
@@ -90,13 +88,10 @@ public class ItemOwnershipThief extends Item implements WDItem {
         if (((ScreenBlockEntity) te).getScreen(side) == null)
             Util.toast(context.getPlayer(), "turnOn");
         else {
-            CompoundTag tag = new CompoundTag();
-            tag.putInt("PosX", pos.x);
-            tag.putInt("PosY", pos.y);
-            tag.putInt("PosZ", pos.z);
-            tag.putByte("Side", (byte) side.ordinal());
-
-            stack.setTag(tag);
+            stack.set(net.montoyo.wd.core.WDComponents.OT_POS_X, pos.x);
+            stack.set(net.montoyo.wd.core.WDComponents.OT_POS_Y, pos.y);
+            stack.set(net.montoyo.wd.core.WDComponents.OT_POS_Z, pos.z);
+            stack.set(net.montoyo.wd.core.WDComponents.OT_SIDE, (byte) side.ordinal());
             Util.toast(context.getPlayer(), ChatFormatting.AQUA, "screenSet");
             Log.warning("Player %s (UUID %s) created an Ownership Thief item for screen at %d %d %d, side %s!", context.getPlayer().getName(), context.getPlayer().getGameProfile().getId().toString(), pos.x, pos.y, pos.z, side.toString());
         }

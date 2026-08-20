@@ -31,16 +31,15 @@ public class ItemMinePad2 extends Item implements WDItem {
     public ItemMinePad2(Properties properties) {
         super(properties
                         .stacksTo(1)
-                        .defaultDurability(0)
 //				.tab(WebDisplays.CREATIVE_TAB)
         );
     }
 
     private static String getURL(ItemStack is) {
-        if (is.getTag() == null || !is.getTag().contains("PadURL"))
+        if (!is.has(net.montoyo.wd.core.WDComponents.PAD_URL))
             return CommonConfig.Browser.homepage;
         else
-            return is.getTag().getString("PadURL");
+            return is.get(net.montoyo.wd.core.WDComponents.PAD_URL);
     }
 
     @Override
@@ -54,16 +53,16 @@ public class ItemMinePad2 extends Item implements WDItem {
                 WebDisplays.PROXY.displaySetPadURLGui(is, getURL(is));
 
             ok = true;
-        } else if (is.getTag() != null && is.getTag().contains("PadID")) {
+        } else if (is.has(net.montoyo.wd.core.WDComponents.PAD_ID)) {
             if (world.isClientSide)
-                WebDisplays.PROXY.openMinePadGui(is.getTag().getUUID("PadID"));
+                WebDisplays.PROXY.openMinePadGui(is.get(net.montoyo.wd.core.WDComponents.PAD_ID));
 
             ok = true;
         } else {
             UUID uuid = UUID.randomUUID();
             String url = getURL(is);
-            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(uuid, url));
-            is.getOrCreateTag().putUUID("PadID", uuid);
+            WDNetworkRegistry.sendToServer(new C2SMessageMinepadUrl(uuid, url));
+            is.set(net.montoyo.wd.core.WDComponents.PAD_ID, uuid);
 
             ok = true;
         }
@@ -75,22 +74,25 @@ public class ItemMinePad2 extends Item implements WDItem {
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity ent) {
         if (ent.onGround() && !ent.level().isClientSide) {
-            CompoundTag tag = ent.getItem().getTag();
+            ItemStack entStack = ent.getItem();
 
-            if (tag != null && tag.contains("ThrowHeight")) {
+            if (entStack.has(net.montoyo.wd.core.WDComponents.THROW_HEIGHT)) {
                 //Delete it, it touched the ground
-                double height = tag.getDouble("ThrowHeight");
+                double height = entStack.get(net.montoyo.wd.core.WDComponents.THROW_HEIGHT);
                 UUID thrower = null;
 
-                if (tag.contains("ThrowerMSB") && tag.contains("ThrowerLSB"))
-                    thrower = new UUID(tag.getLong("ThrowerMSB"), tag.getLong("ThrowerLSB"));
+                if (entStack.has(net.montoyo.wd.core.WDComponents.THROWER_MSB) && entStack.has(net.montoyo.wd.core.WDComponents.THROWER_LSB))
+                    thrower = new UUID(entStack.get(net.montoyo.wd.core.WDComponents.THROWER_MSB), entStack.get(net.montoyo.wd.core.WDComponents.THROWER_LSB));
 
-                if (tag.contains("PadID") || tag.contains("PadURL")) {
-                    tag.remove("ThrowerMSB");
-                    tag.remove("ThrowerLSB");
-                    tag.remove("ThrowHeight");
-                } else //We can delete the whole tag
-                    ent.getItem().setTag(null);
+                if (entStack.has(net.montoyo.wd.core.WDComponents.PAD_ID) || entStack.has(net.montoyo.wd.core.WDComponents.PAD_URL)) {
+                    entStack.remove(net.montoyo.wd.core.WDComponents.THROWER_MSB);
+                    entStack.remove(net.montoyo.wd.core.WDComponents.THROWER_LSB);
+                    entStack.remove(net.montoyo.wd.core.WDComponents.THROW_HEIGHT);
+                } else { //We can delete the whole tag
+                    entStack.remove(net.montoyo.wd.core.WDComponents.THROWER_MSB);
+                    entStack.remove(net.montoyo.wd.core.WDComponents.THROWER_LSB);
+                    entStack.remove(net.montoyo.wd.core.WDComponents.THROW_HEIGHT);
+                }
 
                 if (thrower != null && height - ent.getBlockY() >= 20.0) {
                     ent.level().playSound(null, ent.getBlockX(), ent.getBlockY(), ent.getBlockZ(), SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 4.0f, 1.0f);
@@ -99,7 +101,7 @@ public class ItemMinePad2 extends Item implements WDItem {
 
                     Player ply = ent.level().getPlayerByUUID(thrower);
                     if (ply != null && ply instanceof ServerPlayer)
-                        WebDisplays.INSTANCE.criterionPadBreak.trigger(((ServerPlayer) ply).getAdvancements());
+                        WebDisplays.INSTANCE.criterionPadBreak.trigger((ServerPlayer) ply);
                 }
             }
         }

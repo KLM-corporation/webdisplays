@@ -3,10 +3,10 @@ package net.montoyo.wd.controls;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.controls.builtin.*;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.utilities.data.BlockSide;
@@ -28,11 +28,11 @@ public class ScreenControlRegistry {
 		
 		// lil thing for sanity
 		// avoids the pain the dist cleaner causes, hopefully
-		if (!FMLEnvironment.production) {
-			if (FMLEnvironment.dist.isClient()) {
+		if (!FMLLoader.isProduction()) {
+			if (FMLLoader.getDist().isClient()) {
 				boolean shouldThrow = false;
 				try {
-					Method m = type.clazz.getMethod("handleClient", BlockPos.class, BlockSide.class, ScreenBlockEntity.class, NetworkEvent.Context.class);
+					Method m = type.clazz.getMethod("handleClient", BlockPos.class, BlockSide.class, ScreenBlockEntity.class, IPayloadContext.class);
 					OnlyIn onlyIn = m.getAnnotation(OnlyIn.class);
 					if (onlyIn == null) shouldThrow = true;
 					Dist d = onlyIn.value(); // idc if this throws, lol
@@ -67,7 +67,7 @@ public class ScreenControlRegistry {
 	}
 	
 	public static ScreenControl parse(FriendlyByteBuf buf) {
-		return CONTROL_TYPES.get(new ResourceLocation(buf.readUtf()))
+		return CONTROL_TYPES.get(ResourceLocation.parse(buf.readUtf()))
 				.deserializer.apply(buf);
 	}
 	

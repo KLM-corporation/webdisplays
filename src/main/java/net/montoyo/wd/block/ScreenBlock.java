@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -54,6 +55,11 @@ public class ScreenBlock extends BaseEntityBlock {
     }
 
     @Override
+    protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.BaseEntityBlock> codec() {
+        return simpleCodec(ScreenBlock::new);
+    }
+
+    @Override
     public void onRemove(BlockState p_60515_, Level p_60516_, BlockPos p_60517_, BlockState p_60518_, boolean p_60519_) {
         // TODO: make this also get called on client?
         if (p_60518_.getBlock() == p_60515_.getBlock()) return;
@@ -74,23 +80,32 @@ public class ScreenBlock extends BaseEntityBlock {
         super.onRemove(p_60515_, p_60516_, p_60517_, p_60518_, p_60519_);
     }
 
+        @Override
+    protected ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level world, BlockPos position, Player player, InteractionHand hand, BlockHitResult hit) {
+        return onUse(stack, state, world, position, player, hand, hit);
+    }
+
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos position, Player player, InteractionHand hand, BlockHitResult hit) {
-        ItemStack heldItem = player.getItemInHand(hand);
+    protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos position, Player player, BlockHitResult hit) {
+        return this.onUse(net.minecraft.world.item.ItemStack.EMPTY, state, world, position, player, InteractionHand.MAIN_HAND, hit).result();
+    }
+
+    private ItemInteractionResult onUse(net.minecraft.world.item.ItemStack stack, BlockState state, Level world, BlockPos position, Player player, InteractionHand hand, BlockHitResult hit) {
+        ItemStack heldItem = stack;
         boolean isUpgrade = false;
         if (heldItem.isEmpty())
             heldItem = null; //Easier to work with
         else if (!(isUpgrade = heldItem.getItem() instanceof IUpgrade))
-            return InteractionResult.FAIL;
+            return ItemInteractionResult.FAIL;
         else if (heldItem.getItem() instanceof ItemLaserPointer)
-            return InteractionResult.FAIL; // laser pointer already handles stuff
+            return ItemInteractionResult.FAIL; // laser pointer already handles stuff
 
         // handling the off hand leads to double clicking
         if (!isUpgrade && hand == InteractionHand.OFF_HAND)
-            return InteractionResult.FAIL;
+            return ItemInteractionResult.FAIL;
 
         if (world.isClientSide)
-            return InteractionResult.FAIL;
+            return ItemInteractionResult.FAIL;
 
         boolean sneaking = player.isShiftKeyDown();
         Vector3i pos = new Vector3i(position);
@@ -109,12 +124,12 @@ public class ScreenBlock extends BaseEntityBlock {
                 else
                     (new SetURLData(pos, scr.side, scr.url)).sendTo((ServerPlayer) player);
 
-                return InteractionResult.SUCCESS;
+                return ItemInteractionResult.SUCCESS;
             } else if (heldItem != null) {
                 if (!te.hasUpgrade(side, heldItem)) {
                     if ((scr.rightsFor(player) & ScreenRights.MANAGE_UPGRADES) == 0) {
                         Util.toast(player, "restrictions");
-                        return InteractionResult.CONSUME;
+                        return ItemInteractionResult.CONSUME;
                     }
 
                     if (te.addUpgrade(side, heldItem, player, false)) {
@@ -123,16 +138,16 @@ public class ScreenBlock extends BaseEntityBlock {
 
                         Util.toast(player, ChatFormatting.AQUA, "upgradeOk");
                         if (player instanceof ServerPlayer)
-                            WebDisplays.INSTANCE.criterionUpgradeScreen.trigger(((ServerPlayer) player).getAdvancements());
+                            WebDisplays.INSTANCE.criterionUpgradeScreen.trigger((ServerPlayer) player);
                     } else
                         Util.toast(player, "upgradeError");
 
-                    return InteractionResult.CONSUME;
+                    return ItemInteractionResult.CONSUME;
                 }
             } else {
                 if ((scr.rightsFor(player) & ScreenRights.INTERACT) == 0) {
                     Util.toast(player, "restrictions");
-                    return InteractionResult.CONSUME;
+                    return ItemInteractionResult.CONSUME;
                 }
 
                 Vector2i tmp = new Vector2i();
@@ -143,29 +158,29 @@ public class ScreenBlock extends BaseEntityBlock {
 
                 if (hit2pixels(side, hit.getBlockPos(), new Vector3i(hit.getBlockPos()), scr, hitX, hitY, hitZ, tmp))
                     te.click(side, tmp);
-                return InteractionResult.CONSUME;
+                return ItemInteractionResult.CONSUME;
             }
         }
 //        else if(sneaking) {
 //            Util.toast(player, "turnOn");
-//            return InteractionResult.SUCCESS;
+//            return ItemInteractionResult.SUCCESS;
 //        }
 
         Vector2i size = Multiblock.measure(world, pos, side);
         if (size.x < 2 && size.y < 2) {
             Util.toast(player, "tooSmall");
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         }
 
         if (size.x > CommonConfig.Screen.maxScreenSizeX || size.y > CommonConfig.Screen.maxScreenSizeY) {
             Util.toast(player, "tooBig", CommonConfig.Screen.maxScreenSizeX, CommonConfig.Screen.maxScreenSizeY);
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         }
 
         Vector3i err = Multiblock.check(world, pos, size, side);
         if (err != null) {
             Util.toast(player, "invalid", err.toString());
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         }
 
         boolean created = false;
@@ -179,7 +194,7 @@ public class ScreenBlock extends BaseEntityBlock {
         }
 
         te.addScreen(side, size, null, player, true);
-        return InteractionResult.SUCCESS;
+        return ItemInteractionResult.SUCCESS;
     }
 
     @Override

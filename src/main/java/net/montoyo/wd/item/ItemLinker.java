@@ -41,10 +41,8 @@ public class ItemLinker extends Item implements WDItem {
             return InteractionResult.SUCCESS;
 
         ItemStack stack = context.getPlayer().getItemInHand(context.getHand());
-        CompoundTag tag = stack.getTag();
-
-        if (tag != null) {
-            if (tag.contains("ScreenX") && tag.contains("ScreenY") && tag.contains("ScreenZ") && tag.contains("ScreenSide")) {
+        if (stack.has(net.montoyo.wd.core.WDComponents.LINK_SCREEN_X) && stack.has(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Y) && stack.has(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Z) && stack.has(net.montoyo.wd.core.WDComponents.LINK_SCREEN_SIDE)) {
+            {
                 BlockState state = context.getLevel().getBlockState(context.getClickedPos());
                 IPeripheral target;
 
@@ -55,7 +53,10 @@ public class ItemLinker extends Item implements WDItem {
                     if (te == null || !(te instanceof IPeripheral)) {
                         if (context.getPlayer().isShiftKeyDown()) {
                             Util.toast(context.getPlayer(), ChatFormatting.GOLD, "linkAbort");
-                            stack.setTag(null);
+                            stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_X);
+                            stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Y);
+                            stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Z);
+                            stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_SIDE);
                         } else
                             Util.toast(context.getPlayer(), "peripheral");
 
@@ -65,18 +66,21 @@ public class ItemLinker extends Item implements WDItem {
                     target = (IPeripheral) te;
                 }
 
-                Vector3i tePos = new Vector3i(tag.getInt("ScreenX"), tag.getInt("ScreenY"), tag.getInt("ScreenZ"));
-                BlockSide scrSide = BlockSide.values()[tag.getByte("ScreenSide")];
+                Vector3i tePos = new Vector3i(stack.get(net.montoyo.wd.core.WDComponents.LINK_SCREEN_X), stack.get(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Y), stack.get(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Z));
+                BlockSide scrSide = BlockSide.values()[stack.get(net.montoyo.wd.core.WDComponents.LINK_SCREEN_SIDE)];
 
                 if (target.connect(context.getLevel(), context.getClickedPos(), state, tePos, scrSide)) {
                     Util.toast(context.getPlayer(), ChatFormatting.AQUA, "linked");
 
                     if (context.getPlayer() instanceof ServerPlayer)
-                        WebDisplays.INSTANCE.criterionLinkPeripheral.trigger(((ServerPlayer) context.getPlayer()).getAdvancements());
+                        WebDisplays.INSTANCE.criterionLinkPeripheral.trigger((ServerPlayer) context.getPlayer());
                 } else
                     Util.toast(context.getPlayer(), "linkError");
 
-                stack.setTag(null);
+                stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_X);
+                stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Y);
+                stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Z);
+                stack.remove(net.montoyo.wd.core.WDComponents.LINK_SCREEN_SIDE);
                 return InteractionResult.SUCCESS;
             }
         }
@@ -102,13 +106,10 @@ public class ItemLinker extends Item implements WDItem {
         else if ((scr.rightsFor(context.getPlayer()) & ScreenRights.MANAGE_UPGRADES) == 0)
             Util.toast(context.getPlayer(), "restrictions");
         else {
-            tag = new CompoundTag();
-            tag.putInt("ScreenX", pos.x);
-            tag.putInt("ScreenY", pos.y);
-            tag.putInt("ScreenZ", pos.z);
-            tag.putByte("ScreenSide", (byte) side.ordinal());
-
-            stack.setTag(tag);
+            stack.set(net.montoyo.wd.core.WDComponents.LINK_SCREEN_X, pos.x);
+            stack.set(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Y, pos.y);
+            stack.set(net.montoyo.wd.core.WDComponents.LINK_SCREEN_Z, pos.z);
+            stack.set(net.montoyo.wd.core.WDComponents.LINK_SCREEN_SIDE, (byte) side.ordinal());
             Util.toast(context.getPlayer(), ChatFormatting.AQUA, "screenSet2");
         }
 

@@ -1,76 +1,55 @@
 package net.montoyo.wd.net;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.PacketListener;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
-import net.montoyo.wd.utilities.DistSafety;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.ClientPayloadContext;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.handling.ServerPayloadContext;
 
-import java.util.ArrayList;
-import java.util.function.Supplier;
+/**
+ * Helper utilities shared by all WebDisplays network payloads (NeoForge 1.21.1 payload API).
+ */
+public class Packet {
 
-public class Packet implements net.minecraft.network.protocol.Packet {
-	public Packet() {
-	}
-	
-	public Packet(FriendlyByteBuf buf) {
-	
-	}
-	
-	public void write(FriendlyByteBuf buf) {
-	}
-	
-	public void handle(NetworkEvent.Context ctx) {
-	}
-	
-	public final void handle(PacketListener pHandler) {
-	}
-	
-	public boolean isSkippable() {
-		return net.minecraft.network.protocol.Packet.super.isSkippable();
-	}
-	
-	public boolean checkClient(NetworkEvent.Context ctx) {
-		return ctx.getDirection().getReceptionSide().isClient();
-	}
-	
-	public boolean checkServer(NetworkEvent.Context ctx) {
-		return ctx.getDirection().getReceptionSide().isServer();
-	}
-	
-	public void respond(NetworkEvent.Context ctx, Packet packet) {
-		ctx.enqueueWork(() -> WDNetworkRegistry.INSTANCE.reply(packet, ctx));
-	}
-	
-	private static final ArrayList<Runnable> runLater = new ArrayList<>();
-	
-	public void respondLater(NetworkEvent.Context ctx, Packet packet) {
-		ctx.enqueueWork(() -> runLater.add(() -> {
-			if (checkClient(ctx))
-				WDNetworkRegistry.INSTANCE.sendToServer(packet);
-			else if (ctx.getSender() != null)
-				WDNetworkRegistry.INSTANCE.send(PacketDistributor.PLAYER.with(ctx::getSender), packet);
-			else WDNetworkRegistry.INSTANCE.reply(packet, ctx);
-		}));
-	}
-	
-	public static void onTick(TickEvent.RenderTickEvent event) {
-		if (event.phase.equals(TickEvent.Phase.END)) {
-			if (!runLater.isEmpty()) {
-				if (DistSafety.isConnected()) {
-					for (Runnable runnable : runLater) runnable.run();
-					runLater.clear();
-				}
-			}
-		}
-	}
-	
-	static {
-		MinecraftForge.EVENT_BUS.addListener(Packet::onTick);
-	}
-	
-	public final void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-	}
+    public static boolean checkClient(IPayloadContext ctx) {
+        return ctx.flow().equals(PacketFlow.CLIENTBOUND);
+    }
+
+    public static boolean checkServer(IPayloadContext ctx) {
+        return ctx.flow().equals(PacketFlow.SERVERBOUND);
+    }
+
+    public static ServerPlayer sender(IPayloadContext ctx) {
+        return ctx instanceof ServerPayloadContext spc ? spc.player() : null;
+    }
+
+    public static void enqueueWork(IPayloadContext ctx, Runnable r) {
+        if (ctx instanceof ServerPayloadContext spc) {
+            spc.enqueueWork(r);
+        } else if (ctx instanceof ClientPayloadContext cpc) {
+            cpc.enqueueWork(r);
+        }
+    }
+
+    public static void respond(IPayloadContext ctx, CustomPacketPayload packet) {
+        ctx.reply(packet);
+    }
+
+    public static void respondLater(IPayloadContext ctx, CustomPacketPayload packet) {
+        enqueueWork(ctx, () -> {
+            if (checkClient(ctx)) {
+                PacketDistributor.sendToServer(packet);
+            } else if (sender(ctx) != null) {
+                PacketDistributor.sendToPlayer(sender(ctx), packet);
+            } else {
+                ctx.reply(packet);
+            }
+        });
+    }
+
+    public static void sendToServer(CustomPacketPayload packet) {
+        PacketDistributor.sendToServer(packet);
+    }
 }

@@ -4,9 +4,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.core.MissingPermissionException;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.utilities.data.BlockSide;
@@ -22,9 +22,9 @@ public abstract class ScreenControl {
 	}
 	
 	public abstract void write(FriendlyByteBuf buf);
-	public abstract void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException;
+	public abstract void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, IPayloadContext ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException;
 	@OnlyIn(Dist.CLIENT)
-	public abstract void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx);
+	public abstract void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, IPayloadContext ctx);
 	
 	public void checkPerms(int perms, Function<Integer, Boolean> checker, ServerPlayer player) throws MissingPermissionException {
 		if (!checker.apply(perms)) {

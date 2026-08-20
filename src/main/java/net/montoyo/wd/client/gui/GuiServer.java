@@ -46,8 +46,8 @@ import static net.montoyo.wd.client.gui.GuiMinePad.getChar;
 
 public class GuiServer extends WDScreen {
 	
-	private static final ResourceLocation BG_IMAGE = new ResourceLocation("webdisplays", "textures/gui/server_bg.png");
-	private static final ResourceLocation FG_IMAGE = new ResourceLocation("webdisplays", "textures/gui/server_fg.png");
+	private static final ResourceLocation BG_IMAGE = ResourceLocation.fromNamespaceAndPath("webdisplays", "textures/gui/server_bg.png");
+	private static final ResourceLocation FG_IMAGE = ResourceLocation.fromNamespaceAndPath("webdisplays", "textures/gui/server_fg.png");
 	private static final HashMap<String, Method> COMMAND_MAP = new HashMap<>();
 	private static final int MAX_LINE_LEN = 32;
 	private static final int MAX_LINES = 12;
@@ -114,7 +114,7 @@ public class GuiServer extends WDScreen {
 		
 		for (int i = 0; i < lines.size(); i++) {
 			if (selectedLine == i) {
-				drawWhiteQuad(x - 1, y - 2, font.width(lines.get(i)) + 1, 12);
+				drawWhiteQuad(graphics.pose().last().pose(), x - 1, y - 2, font.width(lines.get(i)) + 1, 12);
 				graphics.drawString(Minecraft.getInstance().font, lines.get(i), x, y, 0xFF129700, false);
 			} else
 				graphics.drawString(Minecraft.getInstance().font, lines.get(i), x, y, 0xFFFFFFFF, false);
@@ -132,7 +132,7 @@ public class GuiServer extends WDScreen {
 		}
 		
 		if (!uploadWizard && blinkTime < 5)
-			drawWhiteQuad(x + 1, y, 6, 8);
+			drawWhiteQuad(graphics.pose().last().pose(), x + 1, y, 6, 8);
 
 //        RenderSystem.enableTexture();
 		RenderSystem.enableBlend();
@@ -142,7 +142,7 @@ public class GuiServer extends WDScreen {
 //        blit(graphics,(width - 256) / 2, (height - 176) / 2, 0, 0, 256, 176);
 	}
 	
-	private void drawWhiteQuad(int x, int y, int w, int h) {
+	private void drawWhiteQuad(org.joml.Matrix4f mat, int x, int y, int w, int h) {
 		float xd = (float) x;
 		float xd2 = (float) (x + w);
 		float yd = (float) y;
@@ -152,13 +152,12 @@ public class GuiServer extends WDScreen {
 //        RenderSystem.disableTexture();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 		Tesselator t = Tesselator.getInstance();
-		BufferBuilder bb = t.getBuilder();
-		bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-		bb.vertex(xd, yd2, zd).endVertex();
-		bb.vertex(xd2, yd2, zd).endVertex();
-		bb.vertex(xd2, yd, zd).endVertex();
-		bb.vertex(xd, yd, zd).endVertex();
-		t.end();
+		BufferBuilder bb = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+		bb.addVertex(mat, xd, yd2, zd);
+		bb.addVertex(mat, xd2, yd2, zd);
+		bb.addVertex(mat, xd2, yd, zd);
+		bb.addVertex(mat, xd, yd, zd);
+		com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(bb.build());
 //        RenderSystem.enableTexture();
 	}
 	
@@ -739,7 +738,7 @@ public class GuiServer extends WDScreen {
 	@CommandHandler("reconnect")
 	public void commandReconnect() {
 		Client.getInstance().stop();
-		WDNetworkRegistry.INSTANCE.sendToServer(Client.getInstance().beginConnection());
+		WDNetworkRegistry.sendToServer(Client.getInstance().beginConnection());
 	}
 	
 	private void startFileUpload(File f, boolean quit) {

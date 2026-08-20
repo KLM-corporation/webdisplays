@@ -4,63 +4,23 @@
 
 package net.montoyo.wd.core;
 
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nonnull;
-import java.util.concurrent.Callable;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.neoforged.neoforge.capabilities.EntityCapability;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 public class WDDCapability implements IWDDCapability {
-    public static class Factory implements Callable<IWDDCapability> {
-        @Override
-        public IWDDCapability call() {
-            return new WDDCapability();
-        }
-    }
 
-    public static class Provider implements ICapabilitySerializable<CompoundTag> {
+    public static final EntityCapability<IWDDCapability, Void> CAP = EntityCapability.createVoid(
+            ResourceLocation.fromNamespaceAndPath("webdisplays", "wddcapability"), IWDDCapability.class);
 
-        public static Capability<IWDDCapability> cap = CapabilityManager.get(new CapabilityToken<>() {
-        });
-        private WDDCapability wddCap = null;
-        private final LazyOptional<IWDDCapability> INSTANCE = LazyOptional.of(this::createWDDCapability);
-
-        @NotNull
-        @Override
-        public <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @org.jetbrains.annotations.Nullable Direction arg) {
-            return cap == capability ? INSTANCE.cast() : LazyOptional.empty();
-        }
-
-        @Override
-        public CompoundTag serializeNBT() {
-            CompoundTag tag = new CompoundTag();
-            if (wddCap != null) tag.putBoolean("firstRun", wddCap.firstRun);
-            return tag;
-        }
-
-        @Override
-        public void deserializeNBT(CompoundTag tag) {
-            if (wddCap != null && tag.contains("firstRun", Tag.TAG_BYTE))
-                wddCap.firstRun = tag.getBoolean("firstRun");
-        }
-
-        @Nonnull
-        private IWDDCapability createWDDCapability() {
-            return wddCap == null ? new WDDCapability() : wddCap;
-        }
-
+    public static void register(RegisterCapabilitiesEvent event) {
+        event.registerEntity(CAP, EntityType.PLAYER, (entity, ctx) -> new WDDCapability());
     }
 
     private boolean firstRun = true;
 
-    private WDDCapability() {
+    public WDDCapability() {
     }
 
     @Override

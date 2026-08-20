@@ -329,7 +329,7 @@ public class List extends BasicControl {
             RenderSystem.setShaderColor(1.f, 1.f, 1.f, 1.f);
             fillTexturedRect(graphics.pose(), x, y, width, height, 0.0, 1.0, 1.0, 0.0);
 
-            fillRect(graphics.bufferSource(), x + width - 5, y + 1 + scrollPos, 4, scrollSize, (scrolling || isInScrollbar(mouseX, mouseY)) ? 0xFF202020 : 0xFF404040);
+            fillRect(graphics.pose().last().pose(), graphics.bufferSource(), x + width - 5, y + 1 + scrollPos, 4, scrollSize, (scrolling || isInScrollbar(mouseX, mouseY)) ? 0xFF202020 : 0xFF404040);
         }
     }
 

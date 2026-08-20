@@ -7,6 +7,7 @@ package net.montoyo.wd.block;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +27,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.montoyo.wd.core.DefaultPeripheral;
 import net.montoyo.wd.entity.AbstractInterfaceBlockEntity;
 import net.montoyo.wd.entity.AbstractPeripheralBlockEntity;
@@ -41,8 +42,18 @@ public class PeripheralBlock extends WDContainerBlock {
     DefaultPeripheral type;
 
     public PeripheralBlock(DefaultPeripheral type) {
-        super(BlockBehaviour.Properties.copy(Blocks.STONE).strength(1.5f, 10.f));
+        super(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).strength(1.5f, 10.f));
         this.type = type;
+    }
+
+    public PeripheralBlock(Properties props) {
+        super(props);
+        this.type = DefaultPeripheral.REDSTONE_CONTROLLER;
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.BaseEntityBlock> codec() {
+        return simpleCodec(PeripheralBlock::new);
     }
 
     @Nullable
@@ -66,23 +77,32 @@ public class PeripheralBlock extends WDContainerBlock {
         return RenderShape.MODEL;
     }
 
-    @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (player.isShiftKeyDown())
-            return InteractionResult.FAIL;
+        @Override
+    protected ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        return onUse(stack, state, world, pos, player, hand, hit);
+    }
 
-        if (player.getItemInHand(hand).getItem() instanceof ItemLinker)
-            return InteractionResult.FAIL;
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+        return this.onUse(net.minecraft.world.item.ItemStack.EMPTY, state, world, pos, player, InteractionHand.MAIN_HAND, hit).result();
+    }
+
+    private ItemInteractionResult onUse(net.minecraft.world.item.ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (player.isShiftKeyDown())
+            return ItemInteractionResult.FAIL;
+
+        if (stack.getItem() instanceof ItemLinker)
+            return ItemInteractionResult.FAIL;
 
         BlockEntity te = world.getBlockEntity(pos);
 
         if (te instanceof AbstractPeripheralBlockEntity)
-            return ((AbstractPeripheralBlockEntity) te).onRightClick(player, hand);
+            return toItemResult(((AbstractPeripheralBlockEntity) te).onRightClick(player, hand));
         else if (te instanceof ServerBlockEntity) {
             ((ServerBlockEntity) te).onPlayerRightClick(player);
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         } else
-            return InteractionResult.FAIL;
+            return ItemInteractionResult.FAIL;
     }
 
     @Override
@@ -120,7 +140,7 @@ public class PeripheralBlock extends WDContainerBlock {
     @Override
     public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack tool) {
         if (!world.isClientSide) {
-            WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> point(world, pos)), new S2CMessageCloseGui(pos));
+            WDNetworkRegistry.sendToNear(world, pos, new S2CMessageCloseGui(pos));
         }
         super.playerDestroy(world, player, pos, state, blockEntity, tool);
     }
@@ -130,12 +150,11 @@ public class PeripheralBlock extends WDContainerBlock {
         playerDestroy(level, null, pos, level.getBlockState(pos), null, null);
     }
 
-    public static PacketDistributor.TargetPoint point(Player exclude, Level world, BlockPos bp) {
-        return new PacketDistributor.TargetPoint((ServerPlayer) exclude, bp.getX(), bp.getY(), bp.getZ(), 64.0, world.dimension());
-    }
-
-    public static PacketDistributor.TargetPoint point(Level world, BlockPos bp) {
-        return new PacketDistributor.TargetPoint(bp.getX(), bp.getY(), bp.getZ(), 64.0, world.dimension());
+    private static ItemInteractionResult toItemResult(InteractionResult r) {
+        if (r == InteractionResult.SUCCESS) return ItemInteractionResult.SUCCESS;
+        if (r == InteractionResult.CONSUME) return ItemInteractionResult.CONSUME;
+        if (r == InteractionResult.FAIL) return ItemInteractionResult.FAIL;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
 }

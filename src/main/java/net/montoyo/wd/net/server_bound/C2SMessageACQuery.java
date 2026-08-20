@@ -7,8 +7,11 @@ package net.montoyo.wd.net.server_bound;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.net.WDNetworkRegistry;
@@ -17,7 +20,15 @@ import net.montoyo.wd.utilities.serialization.NameUUIDPair;
 
 import java.util.Arrays;
 
-public class C2SMessageACQuery extends Packet implements Runnable {
+public class C2SMessageACQuery implements CustomPacketPayload, Runnable {
+
+	public static final CustomPacketPayload.Type<C2SMessageACQuery> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "ac_query"));
+	public static final StreamCodec<FriendlyByteBuf, C2SMessageACQuery> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), C2SMessageACQuery::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
 	private ServerPlayer player;
 	private String beginning;
 	private boolean matchExact;
@@ -28,12 +39,10 @@ public class C2SMessageACQuery extends Packet implements Runnable {
 	}
 	
 	public C2SMessageACQuery(FriendlyByteBuf buf) {
-		super(buf);
 		beginning = buf.readUtf();
 		matchExact = buf.readBoolean();
 	}
 	
-	@Override
 	public void write(FriendlyByteBuf buf) {
 		buf.writeUtf(beginning);
 		buf.writeBoolean(matchExact);
@@ -51,14 +60,13 @@ public class C2SMessageACQuery extends Packet implements Runnable {
 			result = Arrays.stream(profiles).filter(gp -> gp.getName().toLowerCase().startsWith(lBeg)).map(NameUUIDPair::new).toArray(NameUUIDPair[]::new);
 		}
 		
-		WDNetworkRegistry.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new S2CMessageACResult(result));
+		WDNetworkRegistry.sendToPlayer(player, new S2CMessageACResult(result));
 	}
 	
-	public void handle(NetworkEvent.Context ctx) {
-		if (checkServer(ctx)) {
-			player = ctx.getSender();
-			ctx.enqueueWork(this);
-			ctx.setPacketHandled(true);
+	public void handle(IPayloadContext ctx) {
+		if (Packet.checkServer(ctx)) {
+			player = Packet.sender(ctx);
+			Packet.enqueueWork(ctx, this);
 		}
 	}
 }

@@ -13,8 +13,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.montoyo.wd.client.ClientProxy;
 import net.montoyo.wd.registry.ItemRegistry;
 import net.montoyo.wd.item.ItemLaserPointer;
@@ -24,9 +24,6 @@ import static com.mojang.math.Axis.*;
 
 @OnlyIn(Dist.CLIENT)
 public final class LaserPointerRenderer implements IItemRenderer {
-	private final Tesselator t = Tesselator.getInstance();
-	private final BufferBuilder bb = t.getBuilder();
-	
 	public LaserPointerRenderer() {
 	}
 	
@@ -71,31 +68,32 @@ public final class LaserPointerRenderer implements IItemRenderer {
 		poseStack.scale(1.0f / 16.0f, 1.0f / 16.0f, 1.0f / 16.0f);
 		var matrix = poseStack.last().pose();
 		
-		bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		Tesselator t = Tesselator.getInstance();
+		BufferBuilder bb = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 		
-		bb.vertex(matrix, 0.0f, 0.0f, 0.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, 0.0f, 0.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, 0.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 0.0f, 0.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
+		bb.addVertex(matrix, 0.0f, 0.0f, 0.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, 0.0f, 0.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, 0.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 0.0f, 0.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
 		
-		bb.vertex(matrix, 0.0f, 0.0f, 0.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 0.0f, -1.0f, 0.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 0.0f, -1.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 0.0f, 0.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
+		bb.addVertex(matrix, 0.0f, 0.0f, 0.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 0.0f, -1.0f, 0.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 0.0f, -1.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 0.0f, 0.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
 		
-		bb.vertex(matrix, 1.0f, 0.0f, 0.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, -1.0f, 0.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, -1.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, 0.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
+		bb.addVertex(matrix, 1.0f, 0.0f, 0.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, -1.0f, 0.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, -1.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, 0.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
 		
-		bb.vertex(matrix, 0.0f, -1.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, -1.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 1.0f, 0.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
-		bb.vertex(matrix, 0.0f, 0.0f, 4.0f).color(0.5f, 0.5f, 0.5f, 1.0f).endVertex();
+		bb.addVertex(matrix, 0.0f, -1.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, -1.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 1.0f, 0.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
+		bb.addVertex(matrix, 0.0f, 0.0f, 4.0f).setColor(0.5f, 0.5f, 0.5f, 1.0f);
 		
 		if (isOn()) drawLineBetween(bb, matrix0, matrix, new Vec3(0.5f, -0.5f, 0.5f), new Vec3(-40.0f, 4000.5f, -100.0f));
 		
-		t.end();
+		com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(bb.build());
 		
 		RenderSystem.disableBlend();
 		RenderSystem.disableDepthTest();
@@ -112,19 +110,19 @@ public final class LaserPointerRenderer implements IItemRenderer {
 		float quarterWidth = 0.25f;
 		float biggerWidth = 10;
 		
-		bb.vertex(matrix, 0.25f, -0.25f, 0.5f).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix, quarterWidth + 0.25f, -0.25f, 0.5f).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix0, biggerWidth - 6f, 3f, -distance).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix0, -6f, 3f, -distance).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
+		bb.addVertex(matrix, 0.25f, -0.25f, 0.5f).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix, quarterWidth + 0.25f, -0.25f, 0.5f).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix0, biggerWidth - 6f, 3f, -distance).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix0, -6f, 3f, -distance).setColor(0.5f, 0.0f, 0.0f, 1.0f);
 		
-		bb.vertex(matrix, 0.25f, -0.25f, 0.5f).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix, 0.25f, -quarterWidth - 0.25f, 0.5f).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix0, -6f, -biggerWidth + 3f, -distance).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix0, -6f, 3f, -distance).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
+		bb.addVertex(matrix, 0.25f, -0.25f, 0.5f).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix, 0.25f, -quarterWidth - 0.25f, 0.5f).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix0, -6f, -biggerWidth + 3f, -distance).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix0, -6f, 3f, -distance).setColor(0.5f, 0.0f, 0.0f, 1.0f);
 		
-		bb.vertex(matrix, quarterWidth + 0.25f, -0.25f, 0.5f).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix, quarterWidth + 0.25f, -quarterWidth - 0.25f, 0.5f).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix0, biggerWidth - 6f, -biggerWidth + 3f, -distance).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
-		bb.vertex(matrix0, biggerWidth - 6f, 3f, -distance).color((float) 0.5, (float) 0.0, (float) 0.0, (float) 1.0).endVertex();
+		bb.addVertex(matrix, quarterWidth + 0.25f, -0.25f, 0.5f).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix, quarterWidth + 0.25f, -quarterWidth - 0.25f, 0.5f).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix0, biggerWidth - 6f, -biggerWidth + 3f, -distance).setColor(0.5f, 0.0f, 0.0f, 1.0f);
+		bb.addVertex(matrix0, biggerWidth - 6f, 3f, -distance).setColor(0.5f, 0.0f, 0.0f, 1.0f);
 	}
 }

@@ -8,10 +8,10 @@ import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
-import net.minecraftforge.client.model.geometry.IGeometryLoader;
-import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
+import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
+import net.neoforged.neoforge.client.model.geometry.IGeometryLoader;
+import net.neoforged.neoforge.client.model.geometry.IUnbakedGeometry;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,17 +19,17 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class ScreenModelLoader implements IGeometryLoader<ScreenModelLoader.ScreenModelGeometry> {
-    public static final ResourceLocation SCREEN_LOADER = new ResourceLocation("webdisplays", "screen_loader");
+    public static final ResourceLocation SCREEN_LOADER = ResourceLocation.fromNamespaceAndPath("webdisplays", "screen_loader");
 
-    public static final ResourceLocation SCREEN_SIDE = new ResourceLocation("webdisplays", "block/screen");
+    public static final ResourceLocation SCREEN_SIDE = ResourceLocation.fromNamespaceAndPath("webdisplays", "block/screen");
 
     private static final ResourceLocation[] SIDES = new ResourceLocation[16];
     public static final Material[] MATERIALS_SIDES = new Material[16];
     
     static {
         for (int i = 0; i < SIDES.length; i++) {
-            SIDES[i] = new ResourceLocation(SCREEN_SIDE.getNamespace(), SCREEN_SIDE.getPath() + i);
-            MATERIALS_SIDES[i] = ForgeHooksClient.getBlockMaterial(SIDES[i]);
+            SIDES[i] = ResourceLocation.fromNamespaceAndPath(SCREEN_SIDE.getNamespace(), SCREEN_SIDE.getPath() + i);
+            MATERIALS_SIDES[i] = ClientHooks.getBlockMaterial(SIDES[i]);
         }
     }
     
@@ -41,7 +41,7 @@ public class ScreenModelLoader implements IGeometryLoader<ScreenModelLoader.Scre
     public static class ScreenModelGeometry implements IUnbakedGeometry<ScreenModelGeometry> {
         
         @Override
-        public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
+        public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides) {
             return new ScreenBaker(modelState, spriteGetter, overrides, context.getTransforms());
         }
         

@@ -9,8 +9,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.montoyo.wd.core.ScreenRights;
 import net.montoyo.wd.entity.RedstoneControlBlockEntity;
 import net.montoyo.wd.entity.ScreenBlockEntity;
@@ -18,7 +21,15 @@ import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.utilities.serialization.Util;
 import net.montoyo.wd.utilities.math.Vector3i;
 
-public class C2SMessageRedstoneCtrl extends Packet implements Runnable {
+public class C2SMessageRedstoneCtrl implements CustomPacketPayload, Runnable {
+
+	public static final CustomPacketPayload.Type<C2SMessageRedstoneCtrl> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("webdisplays", "redstone_ctrl"));
+	public static final StreamCodec<FriendlyByteBuf, C2SMessageRedstoneCtrl> STREAM_CODEC = StreamCodec.of((buf, msg) -> msg.write(buf), C2SMessageRedstoneCtrl::new);
+
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
 	private Player player;
 	private Vector3i pos;
 	private String risingEdgeURL;
@@ -34,7 +45,6 @@ public class C2SMessageRedstoneCtrl extends Packet implements Runnable {
 	}
 	
 	public C2SMessageRedstoneCtrl(FriendlyByteBuf buf) {
-		super(buf);
 		pos = new Vector3i(buf);
 		risingEdgeURL = buf.readUtf();
 		fallingEdgeURL = buf.readUtf();
@@ -44,7 +54,7 @@ public class C2SMessageRedstoneCtrl extends Packet implements Runnable {
 	public void run() {
 		Level world = player.level();
 		BlockPos blockPos = pos.toBlock();
-		final double maxRange = player.getAttribute(ForgeMod.BLOCK_REACH.get()).getValue();
+		final double maxRange = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE).getValue();
 		
 		if (player.distanceToSqr(blockPos.getX(), blockPos.getY(), blockPos.getZ()) > maxRange * maxRange)
 			return;
@@ -69,18 +79,16 @@ public class C2SMessageRedstoneCtrl extends Packet implements Runnable {
 		redCtrl.setURLs(risingEdgeURL, fallingEdgeURL);
 	}
 	
-	@Override
 	public void write(FriendlyByteBuf buf) {
 		pos.writeTo(buf);
 		buf.writeUtf(risingEdgeURL);
 		buf.writeUtf(fallingEdgeURL);
 	}
 	
-	public void handle(NetworkEvent.Context ctx) {
-		if (checkServer(ctx)) {
-			player = ctx.getSender();
-			ctx.enqueueWork(this);
-			ctx.setPacketHandled(true);
+	public void handle(IPayloadContext ctx) {
+		if (Packet.checkServer(ctx)) {
+			player = Packet.sender(ctx);
+			Packet.enqueueWork(ctx, this);
 		}
 	}
 }
