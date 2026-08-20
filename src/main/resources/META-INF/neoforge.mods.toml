@@ -4,7 +4,12 @@ loaderVersion="[1,)" #mandatory This is typically bumped every Minecraft version
 
 license="MIT"
 
+displayTest="NONE"
+
 issueTrackerURL="" #optional
+
+[[mixins]]
+config="webdisplays.mixins.json"
 
 [[mods]] #mandatory
 
@@ -29,20 +34,20 @@ WebDisplays for Minecraft 1.21.1 (NeoForge) - a mod for creating and interacting
 [[dependencies.webdisplays]] #optional
 modId="neoforge" #mandatory
 mandatory=true #mandatory
-versionRange="[21.1,)" #mandatory
+versionRange="[21.1.0,22)" #mandatory
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.webdisplays]]
 modId="minecraft"
 mandatory=true
-versionRange="[1.21.1,)"
+versionRange="[1.21.1,1.21.2)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.webdisplays]]
 modId="mcef"
 mandatory=true
-versionRange="[2.1.6+1.21.1, )"
+versionRange="[2.1.6,3.0.0)"
 ordering="NONE"
 side="BOTH"
