@@ -137,14 +137,14 @@ public class WebDisplays {
         ItemRegistry.init(bus);
         TileRegistry.init(bus);
         
-        PROXY.preInit();
-        
+        // NOTE: client-side setup requiring Minecraft (mc field, resource manager) is done in
+        // ClientProxy.onClientSetup (FMLClientSetupEvent) - NOT here, because during the mod
+        // constructor Minecraft.getInstance() is not available yet on 1.21.1 (would NPE -> broken mod).
         NeoForge.EVENT_BUS.register(this);
 
         //Other things
-        PROXY.init();
+        PROXY.init(); // schedules CEF init callback (safe, MCEF fires it later when ready)
 
-        PROXY.postInit();
         hasOC = ModList.get().isLoaded("opencomputers");
         hasCC = ModList.get().isLoaded("computercraft");
 

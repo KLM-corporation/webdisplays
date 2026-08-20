@@ -107,6 +107,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	
 	public ClientProxy() {
 		INSTANCE = this;
+		NeoForge.EVENT_BUS.register(this);
 	}
 	
 	public static void renderCrosshair(Options options, int screenWidth, int screenHeight, int offset, GuiGraphics poseStack, CallbackInfo ci) {
@@ -252,6 +253,9 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	/**************************************** INHERITED METHODS ****************************************/
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
+		ClientProxy proxy = (ClientProxy) WebDisplays.PROXY;
+		proxy.mc = Minecraft.getInstance();
+		((ReloadableResourceManager) proxy.mc.getResourceManager()).registerReloadListener(proxy);
 		BlockEntityRenderers.register(TileRegistry.SCREEN_BLOCK_ENTITY.get(), new ScreenRenderer.ScreenRendererProvider());
 	}
 	
@@ -262,13 +266,13 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	
 	@Override
 	public void preInit() {
-		super.preInit();
-		mc = Minecraft.getInstance();
-		NeoForge.EVENT_BUS.register(this);
+		// Client setup is deferred to onClientSetup (FMLClientSetupEvent) on 1.21.1,
+		// because Minecraft.getInstance() is not available during the mod constructor.
 	}
 	
 	@Override
 	public void onCefInit() {
+		try {
 		minePadRenderer = new MinePadRenderer();
 		laserPointerRenderer = new LaserPointerRenderer();
 
@@ -286,11 +290,15 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		MCEF.getClient().getHandle().addMessageRouter(CefMessageRouter.create(WDRouter.INSTANCE));
 
 		findAdvancementToProgressField();
+		} catch (Throwable t) {
+			net.montoyo.wd.utilities.Log.error("WebDisplays failed during CEF init: %s", t.toString());
+			t.printStackTrace();
+		}
 	}
 	
 	@Override
 	public void postInit() {
-		((ReloadableResourceManager) mc.getResourceManager()).registerReloadListener(this);
+		// moved to onClientSetup (FMLClientSetupEvent)
 	}
 	
 	@Override
