@@ -113,6 +113,11 @@ public class WebDisplays {
     
         if (FMLLoader.getDist().isClient()) {
             // proxies are annoying, so from now on, I'mma be just registering stuff in here
+            // ClientProxy static handlers on the MOD bus (registered manually because
+            // ClientProxy cannot use @EventBusSubscriber: it mixes static and instance
+            // @SubscribeEvent methods, which FML does not allow in one annotated class).
+            bus.addListener(ClientProxy::onClientSetup);
+            bus.addListener(ClientProxy::onModelRegistryEvent);
             bus.addListener(ClientProxy::onKeybindRegistry);
             NeoForge.EVENT_BUS.addListener(ClientProxy::onDrawSelection);
             NeoForge.EVENT_BUS.addListener(KeyboardCamera::updateCamera);
