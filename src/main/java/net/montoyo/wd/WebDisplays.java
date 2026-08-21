@@ -155,7 +155,8 @@ public class WebDisplays {
             NeoForge.EVENT_BUS.addListener(KeyboardCamera::gameTick);
         }
 
-        NeoForge.EVENT_BUS.register(this);
+        bus.addListener(this::onRegisterCaps); // IModBusEvent -> mod bus
+        NeoForge.EVENT_BUS.register(this); // common game events -> FORGE bus
 
         // Other things
         try { PROXY.init(); } catch (Throwable t) { Log.error("PROXY.init failed: %s", t.toString()); t.printStackTrace(); }
@@ -275,7 +276,8 @@ public class WebDisplays {
         }
     }
 
-    @SubscribeEvent
+    // Registered manually on the MOD bus (RegisterCapabilitiesEvent is an IModBusEvent,
+    // not allowed on the common NeoForge bus used by register(this)).
     public void onRegisterCaps(RegisterCapabilitiesEvent event) {
         WDDCapability.register(event);
     }
