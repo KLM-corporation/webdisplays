@@ -276,12 +276,12 @@ public class WebDisplays {
     }
 
     @SubscribeEvent
-    public static void onRegisterCaps(RegisterCapabilitiesEvent event) {
+    public void onRegisterCaps(RegisterCapabilitiesEvent event) {
         WDDCapability.register(event);
     }
 
     @SubscribeEvent
-    public static void onServerStop(ServerStoppingEvent ev) throws IOException {
+    public void onServerStop(ServerStoppingEvent ev) throws IOException {
         Server.getInstance().stopServer();
     }
 

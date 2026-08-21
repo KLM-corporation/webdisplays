@@ -15,7 +15,7 @@ config="webdisplays.mixins.json"
 
 modId="webdisplays" #mandatory
 
-version="2.1.6-1.21.1" #mandatory
+version="2.1.7-1.21.1" #mandatory
 
 displayName="WebDisplays" #mandatory
 
