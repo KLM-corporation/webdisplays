@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.client.ClientProxy;
@@ -28,7 +27,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-@net.neoforged.fml.common.EventBusSubscriber(value = Dist.CLIENT)
 public class GuiSetURL2 extends WDScreen {
 	
 	//Screen data

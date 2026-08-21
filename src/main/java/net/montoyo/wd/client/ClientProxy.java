@@ -583,7 +583,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	/**************************************** EVENT METHODS ****************************************/
 
 	@SubscribeEvent
-	public void onLevelTick(LevelTickEvent ev) {
+	public void onLevelTick(LevelTickEvent.Post ev) {
 		if (!ev.getLevel().isClientSide()) return;
 		if (!(ev instanceof LevelTickEvent.Post)) return;
 		
@@ -632,7 +632,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	}
 	
 	@SubscribeEvent
-	public void onTick(ClientTickEvent ev) {
+	public void onTick(ClientTickEvent.Post ev) {
 		if (!(ev instanceof ClientTickEvent.Post)) return;
 		
 		//Help

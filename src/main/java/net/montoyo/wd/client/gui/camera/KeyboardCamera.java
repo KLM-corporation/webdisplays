@@ -212,7 +212,7 @@ public class KeyboardCamera {
 
     protected static int delay = 8;
 
-    public static void gameTick(ClientTickEvent event) {
+    public static void gameTick(ClientTickEvent.Post event) {
         if (mouseStatus[0] || mouseStatus[1]) {
             oxCrd = Mth.lerp(0.5, oxCrd, xCrd);
             oyCrd = Mth.lerp(0.5, oyCrd, yCrd);
