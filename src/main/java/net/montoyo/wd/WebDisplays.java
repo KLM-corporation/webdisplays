@@ -104,72 +104,67 @@ public class WebDisplays {
 
     public WebDisplays(IEventBus bus) {
         INSTANCE = this;
+
+        // Proxy first (critical)
         try {
-        if(FMLLoader.getDist().isClient()) {
-            PROXY = DistSafety.createProxy();
-        } else {
+            if (FMLLoader.getDist().isClient()) {
+                PROXY = DistSafety.createProxy();
+            } else {
+                PROXY = new SharedProxy();
+            }
+        } catch (Throwable t) {
+            Log.error("WebDisplays: proxy creation failed: %s", t.toString());
+            t.printStackTrace();
             PROXY = new SharedProxy();
         }
-    
+
+        // ------------------------------------------------------------------
+        // CRITICAL REGISTRATIONS FIRST - each isolated so one failure cannot
+        // prevent the items/blocks/tab from being registered.
+        // (A single blanket try/catch earlier silently skipped these when any
+        //  earlier step threw -> "unbound" items and empty creative tab.)
+        // ------------------------------------------------------------------
+        try { WDNetworkRegistry.init(bus); } catch (Throwable t) { Log.error("WDNetworkRegistry.init failed: %s", t.toString()); t.printStackTrace(); }
+        try { net.montoyo.wd.core.WDComponents.COMPONENTS.register(bus); } catch (Throwable t) { Log.error("WDComponents register failed: %s", t.toString()); t.printStackTrace(); }
+        try { SOUNDS.register(bus); onRegisterSounds(); } catch (Throwable t) { Log.error("Sounds register failed: %s", t.toString()); t.printStackTrace(); }
+        try { BlockRegistry.init(bus); } catch (Throwable t) { Log.error("BlockRegistry.init failed: %s", t.toString()); t.printStackTrace(); }
+        try { ItemRegistry.init(bus); } catch (Throwable t) { Log.error("ItemRegistry.init failed: %s", t.toString()); t.printStackTrace(); }
+        try { TileRegistry.init(bus); } catch (Throwable t) { Log.error("TileRegistry.init failed: %s", t.toString()); t.printStackTrace(); }
+        try { WDTabs.init(bus); } catch (Throwable t) { Log.error("WDTabs.init failed: %s", t.toString()); t.printStackTrace(); }
+
+        // Criteria (non-critical)
+        try {
+            criterionPadBreak = new Criterion("pad_break");
+            criterionUpgradeScreen = new Criterion("upgrade_screen");
+            criterionLinkPeripheral = new Criterion("link_peripheral");
+            criterionKeyboardCat = new Criterion("keyboard_cat");
+            registerTrigger(criterionPadBreak, criterionUpgradeScreen, criterionLinkPeripheral, criterionKeyboardCat);
+        } catch (Throwable t) { Log.error("Criteria failed: %s", t.toString()); t.printStackTrace(); }
+
+        // Config (non-critical, was the main suspect for early failures)
+        try { if (FMLLoader.getDist().isClient()) ClientConfig.init(bus); } catch (Throwable t) { Log.error("ClientConfig.init failed: %s", t.toString()); t.printStackTrace(); }
+        try { CommonConfig.init(bus); } catch (Throwable t) { Log.error("CommonConfig.init failed: %s", t.toString()); t.printStackTrace(); }
+
+        // Client listeners (MOD bus statics + FORGE bus instance handlers)
         if (FMLLoader.getDist().isClient()) {
-            // proxies are annoying, so from now on, I'mma be just registering stuff in here
-            // ClientProxy static handlers on the MOD bus (registered manually because
-            // ClientProxy cannot use @EventBusSubscriber: it mixes static and instance
-            // @SubscribeEvent methods, which FML does not allow in one annotated class).
             bus.addListener(ClientProxy::onClientSetup);
             bus.addListener(ClientProxy::onModelRegistryEvent);
             bus.addListener(ClientProxy::onKeybindRegistry);
             NeoForge.EVENT_BUS.addListener(ClientProxy::onDrawSelection);
             NeoForge.EVENT_BUS.addListener(KeyboardCamera::updateCamera);
             NeoForge.EVENT_BUS.addListener(KeyboardCamera::gameTick);
-            ClientConfig.init(bus);
         }
-        
-        CommonConfig.init(bus);
-        
-        //Criterions
-        criterionPadBreak = new Criterion("pad_break");
-        criterionUpgradeScreen = new Criterion("upgrade_screen");
-        criterionLinkPeripheral = new Criterion("link_peripheral");
-        criterionKeyboardCat = new Criterion("keyboard_cat");
-        registerTrigger(criterionPadBreak, criterionUpgradeScreen, criterionLinkPeripheral, criterionKeyboardCat);
 
-        WDNetworkRegistry.init(bus);
-        net.montoyo.wd.core.WDComponents.COMPONENTS.register(bus);
-        SOUNDS.register(bus);
-        onRegisterSounds();
-        WDTabs.init(bus);
-        BlockRegistry.init(bus);
-        ItemRegistry.init(bus);
-        TileRegistry.init(bus);
-        
-        // NOTE: client-side setup requiring Minecraft (mc field, resource manager) is done in
-        // ClientProxy.onClientSetup (FMLClientSetupEvent) - NOT here, because during the mod
-        // constructor Minecraft.getInstance() is not available yet on 1.21.1 (would NPE -> broken mod).
         NeoForge.EVENT_BUS.register(this);
 
-        //Other things
-        PROXY.init(); // schedules CEF init callback (safe, MCEF fires it later when ready)
+        // Other things
+        try { PROXY.init(); } catch (Throwable t) { Log.error("PROXY.init failed: %s", t.toString()); t.printStackTrace(); }
 
         hasOC = ModList.get().isLoaded("opencomputers");
         hasCC = ModList.get().isLoaded("computercraft");
 
-      /*  if(hasCC) {
-            try {
-                //We have to do this because the "register" method might be stripped out if CC isn't loaded
-                CCPeripheralProvider.class.getMethod("register").invoke(null);
-            } catch(Throwable t) {
-                Log.error("ComputerCraft was found, but WebDisplays wasn't able to register its CC Interface Peripheral");
-                t.printStackTrace();
-            }
-        } */
-        
         if (!FMLLoader.isProduction()) {
-            ScreenControlRegistry.init();
-        }
-        } catch (Throwable t) {
-            Log.error("WebDisplays failed during mod construction: %s", t.toString());
-            t.printStackTrace();
+            try { ScreenControlRegistry.init(); } catch (Throwable t) { Log.error("ScreenControlRegistry.init failed: %s", t.toString()); t.printStackTrace(); }
         }
     }
 

@@ -19,7 +19,7 @@ public class MouseHandlerMixin {
         boolean flag = action == 1;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen == null) {
+        if (mc.screen == null && ItemRegistry.LASER_POINTER.isBound()) {
             if (
                     mc.player != null && mc.level != null &&
                             mc.player.getItemInHand(InteractionHand.MAIN_HAND).getItem().equals(ItemRegistry.LASER_POINTER.get()) &&

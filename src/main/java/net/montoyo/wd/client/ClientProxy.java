@@ -109,8 +109,12 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	}
 	
 	public static void renderCrosshair(Options options, int screenWidth, int screenHeight, int offset, GuiGraphics poseStack, CallbackInfo ci) {
+		if (Minecraft.getInstance().player == null)
+			return;
 		ItemStack stack = Minecraft.getInstance().player.getItemInHand(InteractionHand.MAIN_HAND);
 		ItemStack stack1 = Minecraft.getInstance().player.getItemInHand(InteractionHand.OFF_HAND);
+		if (!ItemRegistry.MINEPAD.isBound() || !ItemRegistry.LASER_POINTER.isBound())
+			return;
 		
 		if (stack.getItem() instanceof ItemMinePad2) {
 			float sign = 1;
