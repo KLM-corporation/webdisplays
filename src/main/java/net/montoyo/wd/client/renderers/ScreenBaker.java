@@ -68,6 +68,9 @@ public class ScreenBaker implements BakedModel {
 		buf[pos + 4] = Float.floatToRawIntBits(tex.getU(uv.x));
 		buf[pos + 5] = Float.floatToRawIntBits(tex.getV(uv.y));
 		
+		// Lightmap (index 6): full bright so the screen is visible at night / in caves
+		buf[pos + 6] = 0x00F000F0;
+		
 		int nx = (normal.x * 127) & 0xFF;
 		int ny = (normal.y * 127) & 0xFF;
 		int nz = (normal.z * 127) & 0xFF;

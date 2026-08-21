@@ -26,7 +26,7 @@ public class KeyboardItem extends BlockItem {
             Block kbRight = BlockRegistry.blockKbRight.get();
             BlockState rightState = kbRight.defaultBlockState();
 
-            rightState = rightState.setValue(KeyboardBlockLeft.FACING, facing);
+            rightState = rightState.setValue(net.montoyo.wd.block.KeyboardBlockRight.FACING, facing);
             if (!arg.getLevel().setBlock(
                     arg.getClickedPos().relative(d),
                     rightState,
@@ -37,7 +37,7 @@ public class KeyboardItem extends BlockItem {
             Block kbRight = BlockRegistry.blockKbRight.get();
             BlockState rightState = kbRight.defaultBlockState();
 
-            rightState = rightState.setValue(KeyboardBlockLeft.FACING, facing);
+            rightState = rightState.setValue(net.montoyo.wd.block.KeyboardBlockRight.FACING, facing);
             if (!arg.getLevel().setBlock(
                     arg.getClickedPos(),
                     rightState,
