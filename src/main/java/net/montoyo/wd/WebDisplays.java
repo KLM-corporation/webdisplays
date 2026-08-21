@@ -104,6 +104,7 @@ public class WebDisplays {
 
     public WebDisplays(IEventBus bus) {
         INSTANCE = this;
+        try {
         if(FMLLoader.getDist().isClient()) {
             PROXY = DistSafety.createProxy();
         } else {
@@ -160,6 +161,10 @@ public class WebDisplays {
         
         if (!FMLLoader.isProduction()) {
             ScreenControlRegistry.init();
+        }
+        } catch (Throwable t) {
+            Log.error("WebDisplays failed during mod construction: %s", t.toString());
+            t.printStackTrace();
         }
     }
 

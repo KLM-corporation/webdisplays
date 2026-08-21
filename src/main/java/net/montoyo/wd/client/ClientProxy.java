@@ -253,15 +253,26 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	/**************************************** INHERITED METHODS ****************************************/
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
-		ClientProxy proxy = (ClientProxy) WebDisplays.PROXY;
-		proxy.mc = Minecraft.getInstance();
-		((ReloadableResourceManager) proxy.mc.getResourceManager()).registerReloadListener(proxy);
-		BlockEntityRenderers.register(TileRegistry.SCREEN_BLOCK_ENTITY.get(), new ScreenRenderer.ScreenRendererProvider());
+		try {
+			ClientProxy proxy = (ClientProxy) WebDisplays.PROXY;
+			proxy.mc = Minecraft.getInstance();
+			if (proxy.mc.getResourceManager() instanceof ReloadableResourceManager rrm)
+				rrm.registerReloadListener(proxy);
+			BlockEntityRenderers.register(TileRegistry.SCREEN_BLOCK_ENTITY.get(), new ScreenRenderer.ScreenRendererProvider());
+		} catch (Throwable t) {
+			net.montoyo.wd.utilities.Log.error("WebDisplays onClientSetup failed: %s", t.toString());
+			t.printStackTrace();
+		}
 	}
 	
 	@SubscribeEvent
 	public static void onModelRegistryEvent(ModelEvent.RegisterGeometryLoaders event) {
-		event.register(ScreenModelLoader.SCREEN_LOADER, new ScreenModelLoader());
+		try {
+			event.register(ScreenModelLoader.SCREEN_LOADER, new ScreenModelLoader());
+		} catch (Throwable t) {
+			net.montoyo.wd.utilities.Log.error("WebDisplays onModelRegistryEvent failed: %s", t.toString());
+			t.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -862,6 +873,11 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	public static boolean mouseOn = false;
 	
 	public static void onKeybindRegistry(RegisterKeyMappingsEvent event) {
-		event.register(KEY_MOUSE);
+		try {
+			event.register(KEY_MOUSE);
+		} catch (Throwable t) {
+			net.montoyo.wd.utilities.Log.error("WebDisplays onKeybindRegistry failed: %s", t.toString());
+			t.printStackTrace();
+		}
 	}
 }
