@@ -3,64 +3,42 @@ package net.montoyo.wd.client.renderers;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
 import net.neoforged.neoforge.client.model.geometry.IGeometryLoader;
 import net.neoforged.neoforge.client.model.geometry.IUnbakedGeometry;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
 import java.util.function.Function;
 
 public class ScreenModelLoader implements IGeometryLoader<ScreenModelLoader.ScreenModelGeometry> {
     public static final ResourceLocation SCREEN_LOADER = ResourceLocation.fromNamespaceAndPath("webdisplays", "screen_loader");
 
-    public static final ResourceLocation SCREEN_SIDE = ResourceLocation.fromNamespaceAndPath("webdisplays", "block/screen");
+    private static final int SCREEN_TEXTURE_COUNT = 16;
 
-    private static final ResourceLocation[] SIDES = new ResourceLocation[16];
-    public static final Material[] MATERIALS_SIDES = new Material[16];
-    
-    static {
-        for (int i = 0; i < SIDES.length; i++) {
-            SIDES[i] = ResourceLocation.fromNamespaceAndPath(SCREEN_SIDE.getNamespace(), SCREEN_SIDE.getPath() + i);
-            MATERIALS_SIDES[i] = ClientHooks.getBlockMaterial(SIDES[i]);
-        }
-    }
-    
     @Override
     public ScreenModelGeometry read(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
         return new ScreenModelGeometry();
     }
 
     public static class ScreenModelGeometry implements IUnbakedGeometry<ScreenModelGeometry> {
-        
         @Override
         public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides) {
-            return new ScreenBaker(modelState, spriteGetter, overrides, context.getTransforms());
-        }
-        
-//        @Override
-//        public void resolveParents(Function<ResourceLocation, UnbakedModel> modelGetter, IGeometryBakingContext context) {
-//            IUnbakedGeometry.super.resolveParents(modelGetter, context);
-//        }
-        
-//        @Override
-//        public Set<String> getConfigurableComponentNames() {
-//            return IUnbakedGeometry.super.getConfigurableComponentNames();
-//        }
+            TextureAtlasSprite[] textures = new TextureAtlasSprite[SCREEN_TEXTURE_COUNT];
 
-        // TODO: ?
-//        @Override
-//        public Collection<Material> getMaterials(IGeometryBakingContext iGeometryBakingContext, Function<ResourceLocation, UnbakedModel> function, Set<Pair<String, String>> set) {
-//            return Arrays.asList(MATERIALS_SIDES);
-//        }
+            // Resolve the model's declared texture slots through its baking context. Passing
+            // independently-created Materials to spriteGetter can yield its default/unit
+            // sprite instead, whose UVs cover the complete block atlas.
+            for (int i = 0; i < textures.length; i++) {
+                textures[i] = spriteGetter.apply(context.getMaterial("screen" + i));
+            }
+
+            return new ScreenBaker(modelState, textures, overrides, context.getTransforms());
+        }
     }
 }
-
-
