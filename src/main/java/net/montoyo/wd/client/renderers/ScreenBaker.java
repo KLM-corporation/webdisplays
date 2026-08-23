@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 public class ScreenBaker implements BakedModel {
 	
@@ -37,21 +36,19 @@ public class ScreenBaker implements BakedModel {
 	private final BlockSide[] blockSides = BlockSide.values();
 	private final Direction[] blockFacings = Direction.values();
 	private final ModelState modelState;
-	private final Function<net.minecraft.client.resources.model.Material, TextureAtlasSprite> spriteGetter;
 	private final ItemOverrides overrides;
 	private final ItemTransforms itemTransforms;
 	
 	IntegerModelProperty[] TEXTURES = new IntegerModelProperty[6];
 	
-	public ScreenBaker(ModelState modelState, Function<net.minecraft.client.resources.model.Material, TextureAtlasSprite> spriteGetter, ItemOverrides overrides, ItemTransforms itemTransforms) {
+	public ScreenBaker(ModelState modelState, TextureAtlasSprite[] textures, ItemOverrides overrides, ItemTransforms itemTransforms) {
 		this.modelState = modelState;
-		this.spriteGetter = spriteGetter;
 		this.overrides = overrides;
 		this.itemTransforms = itemTransforms;
-		
-		for (int i = 0; i < texs.length; i++) {
-			texs[i] = spriteGetter.apply(ScreenModelLoader.MATERIALS_SIDES[i]);
-		}
+
+		if (textures.length != texs.length)
+			throw new IllegalArgumentException("Expected " + texs.length + " screen textures, got " + textures.length);
+		System.arraycopy(textures, 0, texs, 0, texs.length);
 		
 		for (int i = 0; i < TEXTURES.length; i++) {
 			TEXTURES[i] = new IntegerModelProperty();

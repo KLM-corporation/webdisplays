@@ -1,10 +1,11 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.120'
 }
 
-version = mod_version
-group = maven_group
+version = System.getenv('JITPACK') ? System.getenv('VERSION') : mod_version
+group = System.getenv('JITPACK') ? System.getenv('GROUP') : maven_group
 
 base {
     archivesName = archives_base_name
@@ -51,6 +52,14 @@ dependencies {
 
     // Mixin is bundled with NeoForge at runtime; refmaps are obsolete in 1.21+ (official mappings everywhere)
     compileOnly "org.spongepowered:mixin:0.8.7"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }
 
 // jar meta-info
