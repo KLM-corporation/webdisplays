@@ -98,12 +98,13 @@ publishing {
             version = jitpackVersion
             artifact(layout.buildDirectory.file('outputs/apk/debug/app-debug.apk')) {
                 extension = 'apk'
-                builtBy tasks.named('assembleDebug')
             }
         }
     }
 }
 
-tasks.named('publishApkPublicationToMavenLocal') {
-    dependsOn tasks.named('assembleDebug')
+afterEvaluate {
+    tasks.named('publishApkPublicationToMavenLocal') {
+        dependsOn tasks.named('assembleDebug')
+    }
 }
