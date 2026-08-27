@@ -1,4 +1,4 @@
 jdk:
   - openjdk21
 install:
-  - cd geniex_chat_android && ../gradlew --no-daemon clean assembleDebug publishApkPublicationToMavenLocal --stacktrace
+  - ./gradlew clean build publishToMavenLocal --stacktrace
